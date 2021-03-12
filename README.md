@@ -2,18 +2,18 @@
 
 ## Installation
 
-`bash create_docker.sh [-v]`
+`sudo bash create_docker.sh`
 
 This command will:
 - Download the missing embeddings using `data/embeddings_metadata.json` and save them in `embeddings/embeddings_type/embeddings_name.[bin|gz]`
-- Extract the archive if the embeddings are in a `.gz` file
-- Convert the embeddings in `.magnitude` files and delete the `.bin` files
-- If the option -v is used, it will preload the datasud keywords vectors for each embeddings and save them in `keywords_vectors/embeddings_type/embeddings_name.npy`
-- Run the docker build on the dockerfile, this will:
-    - Start the `prestart.sh` script to preload the embeddings using magnitudeModel.most_similar()
+- Extract the archive if the embeddings are in a `.gz` file 
+- Run the docker build on the dockerfile, this will start the `prestart.sh` script:
     - download libraries requirements from `requirements.txt`
+    - Convert the embeddings in `.magnitude` files and delete the `.bin` files
+    - Save the datasud keyword as vectors for each embeddings and save them in `keywords_vectors/embeddings_type/embeddings_name.npy`
+    - Preload the embeddings using magnitudeModel.most_similar()
     - start the docker https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker
-    - create an image: `expansion-query-api:[version]`
+    - create an image: `fastapi-query-expansion:[version]`
 - Run a docker container with the same name as the image
 
 ## API Documentation

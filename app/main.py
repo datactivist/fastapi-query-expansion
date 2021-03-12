@@ -1,6 +1,5 @@
 from __future__ import annotations
 import expansion
-import timeit
 import os
 import json
 import numpy as np
@@ -129,13 +128,11 @@ class ResponseFromSense(BaseModel):
 embeddings_path = Path("embeddings")
 # Looping on available .magnitude embeddings to save them in dictionnary
 print("\Starting saving embeddings in dictionnary")
-start = timeit.default_timer()
 for embeddings in list(embeddings_path.glob("**/*.magnitude")):
     model_list[embeddings.name] = expansion.MagnitudeModel(
         embeddings.parent.name, embeddings.name
     )
-end = timeit.default_timer()
-print("Saving done:", end - start, "\n")
+print("Saving done")
 
 # Launch API
 app = FastAPI()

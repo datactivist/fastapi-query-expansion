@@ -1,20 +1,25 @@
+"""
+Script to preload and save datasud keywords as vector for each embeddings of type .magnitude in the directory tree app/embeddings/*
+"""
+
 import json
 import os
-import timeit
 import numpy as np
 from pathlib import Path
 
 from pymagnitude import *
 
-data_path = Path("app/data")
-keyw_path = Path("app/keywords_vectors")
-embeddings_path = Path("app/embeddings")
+data_path = Path("data")
+keyw_path = Path("keywords_vectors")
+embeddings_path = Path("embeddings")
 
 
 def preload_datasud_vectors(model, embeddings_type, embeddings_name, datasud_keywords):
     """
-    Preload datasud vectors by saving them separately in "datasud_keywords_vectors/embedding_type/embedding_name.npy"
+    Preload datasud vectors by saving them separately in "datasud_keywords_vectors/embeddings_type/embeddings_name.npy"
     Input:  model: magnitude model
+            embeddings_type: type of the embeddings
+            embeddings_name: name of the embeddings
             datasud_keywords: Datasud keywords as list of string
     """
 
@@ -30,11 +35,8 @@ def preload_datasud_vectors(model, embeddings_type, embeddings_name, datasud_key
     if not os.path.isfile(path_vec):
 
         print("Saving datasud keywords vectors for", embeddings_name)
-        start = timeit.default_timer()
         vectors = model.query(datasud_keywords)
         np.save(path_vec, vectors)
-        end = timeit.default_timer()
-        print("Vectors saved")
 
     else:
         print("vectors for", embeddings_name, "already exist")
@@ -47,12 +49,7 @@ with open(data_path / Path("datasud_keywords.json"), encoding="utf-16") as json_
     datasud_keywords = json.load(json_file,)["result"]
 
 # Looping on available .magnitude embeddings to preload them
-print("\nStarting Preloading of datasud vectors")
-start = timeit.default_timer()
 for embeddings in list(embeddings_path.glob("**/*.magnitude")):
-    model = Magnitude(embeddings)
     preload_datasud_vectors(
-        model, embeddings.parent.name, embeddings.name, datasud_keywords
+        Magnitude(embeddings), embeddings.parent.name, embeddings.name, datasud_keywords
     )
-end = timeit.default_timer()
-print("Preloading of datasud vectors done:", end - start, "\n")

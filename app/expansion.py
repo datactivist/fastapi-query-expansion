@@ -1,5 +1,4 @@
 import json
-import timeit
 import numpy as np
 from enum import Enum
 from pathlib import Path
@@ -209,8 +208,6 @@ def get_datasud_keywords(
            max_k: number of neighbors to find
     Output: the max_k most similar datasud keywords
     """
-
-    start = timeit.default_timer()
 
     data_sud = []
 
