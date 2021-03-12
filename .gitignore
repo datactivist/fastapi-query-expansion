@@ -127,3 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# too large stuff
+embeddings/
+keywords_vectors/
