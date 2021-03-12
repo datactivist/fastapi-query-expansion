@@ -1,0 +1,26 @@
+[
+    {
+        "embedding_type": "fasttext",
+        "embedding_name": "cc.fr.300.magnitude",
+        "site_url": "https://fasttext.cc/docs/en/crawl-vectors.html",
+        "dl_url": "https://dl.fbaipublicfiles.com/fasttext/vectors-crawl/cc.fr.300.vec.gz"
+    },
+    {
+        "embedding_type": "word2vec",
+        "embedding_name": "frWiki_no_lem_no_postag_no_phrase_1000_cbow_cut100.magnitude",
+        "site_url": "https://fauconnier.github.io/",
+        "dl_url": "https://s3.us-east-2.amazonaws.com/embeddings.net/embeddings/frWiki_no_lem_no_postag_no_phrase_1000_cbow_cut100.bin"
+    },
+    {
+        "embedding_type": "word2vec",
+        "embedding_name": "frWac_postag_no_phrase_700_skip_cut50.magnitude",
+        "site_url": "https://fauconnier.github.io/",
+        "dl_url": "https://s3.us-east-2.amazonaws.com/embeddings.net/embeddings/frWac_postag_no_phrase_700_skip_cut50.bin"
+    },
+    {
+        "embedding_type": "word2vec",
+        "embedding_name": "frWac_non_lem_no_postag_no_phrase_200_cbow_cut0.magnitude",
+        "site_url": "https://fauconnier.github.io/",
+        "dl_url": "https://s3.us-east-2.amazonaws.com/embeddings.net/embeddings/frWac_non_lem_no_postag_no_phrase_200_cbow_cut0.bin"
+    }
+]
