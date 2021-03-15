@@ -1,22 +1,38 @@
 # FastAPI Query Expansion
 
-## Installation
+## Déploiement sans docker
 
-`sudo bash create_docker.sh`
+### Installation dépendances
+```
+pip install fastapi, uvicorn
+```
 
-This command will:
-- Download the missing embeddings using `data/embeddings_metadata.json` and save them in `embeddings/embeddings_type/embeddings_name.[bin|gz]`
-- Extract the archive if the embeddings are in a `.gz` file 
-- Run the docker build on the dockerfile, this will:
-    - import the official fastapi docker https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker
-    - create an image: `fastapi-query-expansion:[version]`
-    - start the `prestart.sh` script
-        - download libraries requirements from `requirements.txt`
-        - Convert the embeddings in `.magnitude` files and delete the `.bin` files
-        - Save the datasud keyword as vectors for each embeddings and save them in `keywords_vectors/embeddings_type/embeddings_name.npy`
-        - Preload the embeddings using magnitudeModel.most_similar()
-- Run a docker container with the same name as the image
+Depuis le répertoire `fastapi-query-expansion/`
+
+```
+python3 start_service.py
+```
+
+## Déploiement avec docker (créer une image docker)
+
+Dans le fichier `fastapi-query-expansion/config.py`, changer la valeur de `deployment_method` en `docker`
+
+Depuis le répertoire `fastapi-query-expansion/`
+
+```
+python3 start_service.py
+```
+
+
+## Preprocessing et preloading
+
+Il y a quatre étapes avant de lancer le service:
+
+- Téléchargement des embeddings manquant
+- Conversion de ces derniers
+- Préchargement avec la méthode most_similar
+- Préchargement des mots-clés de datasud
 
 ## API Documentation
 
-Once the docker is started, the documentation of the API is available here: http://127.0.0.1/docs#/
+Once the docker is started (in local mode), the documentation of the API is available here: http://127.0.0.1/docs#/

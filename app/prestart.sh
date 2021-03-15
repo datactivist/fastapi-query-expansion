@@ -1,19 +1,44 @@
 #! /usr/bin/env bash
+
+# docker path by default
+path="/app/preprocess/"
+
+while [ -n "$1" ]; do # while loop starts
+
+	case "$1" in
+
+	-l) path="preprocess/" ;; #if local mode, change path for local depoloyment
+
+	*) echo "Option $1 not recognized" ;; # In case you typed a different option other than a,b,c
+
+	esac
+
+	shift
+
+done
+
+
 echo ""
 echo "Starting conversion of embeddings to .magnitude, this may take some times..."
-python /app/preprocess/convertEmbeddings.py
+script="convertEmbeddings.py"
+full=$path$script
+python $full
 echo "Conversion done"
 echo ""
 
 echo ""
 echo "Starting preload of embeddings using most_similar function"
-python /app/preprocess/preloadEmbeddings.py
+script="preloadEmbeddings.py"
+full=$path$script
+python $full
 echo "Preloading done"
 echo ""
 
 echo ""
 echo "Starting saving of datasud vectors"
-python /app/preprocess/preloadVectors.py
+script="preloadVectors.py"
+full=$path$script
+python $full
 echo "Saving done"
 echo ""
 
