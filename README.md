@@ -12,7 +12,7 @@ pip install fastapi uvicorn
 pip install git+https://github.com/moreymat/magnitude.git@0.1.143.1#egg=pymagnitude
 ```
 
-Dans le fichier `fastapi-query-expansion/api-config.py`, changer la valeur de `deployment_method` en `local` et créez la configuration que vous souhaitez.
+Dans le fichier `fastapi-query-expansion/api-config.config`, changer la valeur de `deployment_method` en `local` et créez la configuration que vous souhaitez.
 
 Depuis le répertoire `fastapi-query-expansion/`
 
@@ -26,7 +26,7 @@ Requirements:
 - Python >= 3.X
 - Docker >= 20.X
 
-Dans le fichier `fastapi-query-expansion/api-config.py`, changer la valeur de `deployment_method` en `docker` et créez la configuration que vous souhaitez.
+Dans le fichier `fastapi-query-expansion/api-config.config`, changer la valeur de `deployment_method` en `docker` et créez la configuration que vous souhaitez.
 
 Depuis le répertoire `fastapi-query-expansion/`
 
