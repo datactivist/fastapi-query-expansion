@@ -7,6 +7,7 @@ from pathlib import Path
 import sys
 
 data_path = Path("app/data")
+embeddings_path = Path("app/embeddings")
 
 with open(data_path / Path("embeddings_metadata.json")) as json_file:
     data = json.load(json_file)
@@ -18,15 +19,27 @@ else:
     exit(1)
 
 flag_no_embed = True
-for i, embedding in enumerate(data):
+dockerignorestr = ""
+for i, embeddings in enumerate(data):
     if i < len(activation):
         if activation[i] == "activate":
             flag_no_embed = False
-            embedding["is_activated"] = True
+            embeddings["is_activated"] = True
         else:
-            embedding["is_activated"] = False
+            embeddings["is_activated"] = False
+            embed_path = embeddings_path / Path(
+                embeddings["type"] + "/" + embeddings["name"]
+            )
+            dockerignorestr += str(embed_path) + "\n"
+            dockerignorestr += str(embed_path.with_suffix(".magnitude")) + "\n"
+
     else:
-        embedding["is_activated"] = False
+        embeddings["is_activated"] = False
+        embed_path = embeddings_path / Path(
+            embeddings["type"] + "/" + embeddings["name"]
+        )
+        dockerignorestr += str(embed_path) + "\n"
+        dockerignorestr += str(embed_path.with_suffix(".magnitude")) + "\n"
 
 
 if flag_no_embed:
@@ -36,3 +49,6 @@ if flag_no_embed:
 
 with open(data_path / Path("embeddings_metadata.json"), "w") as json_file:
     json.dump(data, json_file)
+
+with open(".dockerignore", "w") as dockerignorefile:
+    dockerignorefile.write(dockerignorestr)
