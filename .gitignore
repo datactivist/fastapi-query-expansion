@@ -131,3 +131,6 @@ dmypy.json
 # too large stuff
 embeddings/
 keywords_vectors/
+
+# fastapidocker
+.dockerignore
