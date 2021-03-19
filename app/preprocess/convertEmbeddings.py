@@ -15,15 +15,11 @@ def convert_embeddings_to_magnitude(input_file):
     convert the embeddings in parameter in a magnitude file, delete the old embeddings
     """
 
-    input_file = (
-        embeddings_path
-        / Path(input_file["embeddings_type"])
-        / Path(input_file["embeddings_name"])
-    )
+    input_file = embeddings_path / Path(input_file["type"]) / Path(input_file["name"])
     output_file = input_file.with_suffix(".magnitude")
 
-    # if magnitude file does not exists already
-    if not os.path.exists(output_file):
+    # if magnitude file does not exists already and is activated
+    if not os.path.exists(output_file) and input_file["is_activated"]:
         print("converting", input_file)
         command = (
             "python3 -m pymagnitude.converter -i "
@@ -32,13 +28,14 @@ def convert_embeddings_to_magnitude(input_file):
             + str(output_file)
         )
         os.system(command)
-        # os.remove(input_name)
+        os.remove(input_file)
+    else:
+        print(input_file, "is already converted / is not activated")
 
 
-# Open embeddings metadata to get urls
+# Loop on embeddings to convert them
 with open(data_path / Path("embeddings_metadata.json")) as json_file:
     data = json.load(json_file)
 
-# Loop on embeddings to convert them
 for embeddings in data:
     convert_embeddings_to_magnitude(embeddings)

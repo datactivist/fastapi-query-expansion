@@ -127,7 +127,7 @@ class ResponseFromSense(BaseModel):
 
 embeddings_path = Path("embeddings")
 # Looping on available .magnitude embeddings to save them in dictionnary
-print("\Starting saving embeddings in dictionnary")
+print("Starting saving embeddings in dictionnary")
 for embeddings in list(embeddings_path.glob("**/*.magnitude")):
     model_list[embeddings.name] = expansion.MagnitudeModel(
         embeddings.parent.name, embeddings.name

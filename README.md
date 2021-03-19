@@ -2,37 +2,49 @@
 
 ## Déploiement sans docker
 
+Requirements: 
+- python >= 3.X
+
 ### Installation dépendances
+
 ```
-pip install fastapi, uvicorn
+pip install fastapi uvicorn
+pip install git+https://github.com/moreymat/magnitude.git@0.1.143.1#egg=pymagnitude
 ```
+
+Dans le fichier `fastapi-query-expansion/api-config.py`, changer la valeur de `deployment_method` en `local` et créez la configuration que vous souhaitez.
 
 Depuis le répertoire `fastapi-query-expansion/`
 
 ```
-python3 start_service.py
+bash ./start_service.sh
 ```
 
-## Déploiement avec docker (créer une image docker)
+## Créer une image docker
 
-Dans le fichier `fastapi-query-expansion/config.py`, changer la valeur de `deployment_method` en `docker`
+Requirements:
+- Python >= 3.X
+- Docker >= 20.X
+
+Dans le fichier `fastapi-query-expansion/api-config.py`, changer la valeur de `deployment_method` en `docker` et créez la configuration que vous souhaitez.
 
 Depuis le répertoire `fastapi-query-expansion/`
 
 ```
-python3 start_service.py
+bash ./start_service.sh
 ```
 
 
 ## Preprocessing et preloading
 
-Il y a quatre étapes avant de lancer le service:
+Il y a cinq étapes avant de lancer le service:
 
+- Prise en comptes du fichier config
 - Téléchargement des embeddings manquant
-- Conversion de ces derniers
-- Préchargement avec la méthode most_similar
-- Préchargement des mots-clés de datasud
+- Conversion de ces derniers    (non sauvegardé localement via docker)
+- Préchargement avec la méthode most_similar 
+- Préchargement des mots-clés de datasud 
 
 ## API Documentation
 
-Once the docker is started (in local mode), the documentation of the API is available here: http://127.0.0.1/docs#/
+Une fois le service lancé (localement), une documentation intéractible est disponible à cette adresse: http://127.0.0.1/docs#/

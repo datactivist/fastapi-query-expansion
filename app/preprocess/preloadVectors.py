@@ -14,6 +14,17 @@ keyw_path = Path("keywords_vectors")
 embeddings_path = Path("embeddings")
 
 
+def is_activated(embeddings, embeddings_metadata):
+    for metadata in embeddings_metadata:
+        if (
+            str(Path(metadata["name"]).with_suffix(".magnitude"))
+            == str(embeddings.name)
+            and metadata["is_activated"]
+        ):
+            return True
+    return False
+
+
 def preload_datasud_vectors(model, embeddings_type, embeddings_name, datasud_keywords):
     """
     Preload datasud vectors by saving them separately in "datasud_keywords_vectors/embeddings_type/embeddings_name.npy"
@@ -48,8 +59,17 @@ def preload_datasud_vectors(model, embeddings_type, embeddings_name, datasud_key
 with open(data_path / Path("datasud_keywords.json"), encoding="utf-16") as json_file:
     datasud_keywords = json.load(json_file,)["result"]
 
+
+# embeddings metadata
+with open(data_path / Path("embeddings_metadata.json")) as json_file:
+    metadata = json.load(json_file)
+
 # Looping on available .magnitude embeddings to preload them
 for embeddings in list(embeddings_path.glob("**/*.magnitude")):
-    preload_datasud_vectors(
-        Magnitude(embeddings), embeddings.parent.name, embeddings.name, datasud_keywords
-    )
+    if is_activated(embeddings, metadata):
+        preload_datasud_vectors(
+            Magnitude(embeddings),
+            embeddings.parent.name,
+            embeddings.name,
+            datasud_keywords,
+        )
