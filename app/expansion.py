@@ -136,7 +136,7 @@ class WordnetModel:
                     sim = new_sim
         return sim
 
-    def most_similar(self, synset, topn, slider):
+    def most_similar(self, synset, topn=10, slider=0):
         """
         Return a dictionnary with the list of similar words and their similarityType
 

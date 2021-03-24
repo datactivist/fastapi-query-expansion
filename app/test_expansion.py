@@ -13,17 +13,54 @@ def test_magnitudeModel():
 
     if model != None:
 
-        assert model.embeddings_name is str
-
         sim = model.similarity("chien", "chat")
         assert sim <= 1 and sim >= 0
 
         most_sim = model.most_similar("barrage", 10)
-        assert len(most_sim) == 10
+        for sim_type in expansion.SimilarityType:
+            if sim_type == expansion.SimilarityType.similar:
+                assert len(most_sim[sim_type]) == 10
+            else:
+                assert len(most_sim[sim_type]) == 0
 
         dtsud_strings, dtsud_keywords = model.load_datasud_keywords()
         assert len(dtsud_keywords) > 0
         assert len(dtsud_strings) > 0
+
+
+def test_get_senses_from_keyword():
+
+    keyword = "barrage"
+
+    # Wordnet Test
+    wordnet_model = expansion.WordnetModel()
+    senses = expansion.get_senses_from_keyword(wordnet_model, keyword)
+    assert len(senses) > 2
+
+    # Magnitude embeddings Test
+    for embeddings in list(Path("embeddings").glob("**/*.magnitude")):
+        basic_model = expansion.MagnitudeModel(embeddings.parent.name, embeddings.name)
+        break
+
+    if basic_model != None:
+        senses = expansion.get_senses_from_keyword(basic_model, keyword)
+        assert len(senses) == 1
+        assert senses[0] == keyword
+
+
+def test_wordnetModel():
+
+    model = expansion.WordnetModel()
+
+    sim = model.similarity("chien", "chat")
+    assert sim <= 1 and sim >= 0
+
+    senses = expansion.get_senses_from_keyword(model, "chien")
+    most_sim = model.most_similar(senses[0])
+
+    for sim_type in expansion.SimilarityType:
+        if sim_type != expansion.SimilarityType.similar:
+            assert len(most_sim[sim_type]) > 1
 
 
 def test_split_keywords():
@@ -82,26 +119,6 @@ def test_get_datasud_keywords():
         assert len(keywords_list) == max_k
 
 
-def test_get_senses_from_keyword():
-
-    keyword = "barrage"
-
-    # Wordnet Test
-    wordnet_model = expansion.WordnetModel()
-    senses = expansion.get_senses_from_keyword(wordnet_model, keyword)
-    assert len(senses) > 2
-
-    # Magnitude embeddings Test
-    for embeddings in list(Path("embeddings").glob("**/*.magnitude")):
-        basic_model = expansion.MagnitudeModel(embeddings.parent.name, embeddings.name)
-        break
-
-    if basic_model != None:
-        senses = expansion.get_senses_from_keyword(basic_model, keyword)
-        assert len(senses) == 1
-        assert senses[0] == keyword
-
-
 def test_build_tree():
 
     keyword = "barrage"
@@ -109,7 +126,6 @@ def test_build_tree():
     max_depth = 1
     max_dtsud_keywords = 5
 
-    """
     # Wordnet Test
     wordnet_model = expansion.WordnetModel()
     tree = expansion.build_tree(
@@ -121,7 +137,6 @@ def test_build_tree():
     # Test Cluster en amont pour wordnet
     assert len(tree["tree"][0]["similar_senses"]) > 1  # Ignored max_width
     assert len(tree["tree"][0]["similar_senses"][0]) == 2  # tuple (sense, synonymtype)
-    """
 
     # Magnitude embeddings Test
     for embeddings in list(Path("embeddings").glob("**/*.magnitude")):
