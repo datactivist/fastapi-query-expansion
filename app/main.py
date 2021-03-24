@@ -207,8 +207,8 @@ async def manage_query_expand(query: Search_Expand_Query):
     data = expansion.expand_keywords(
         model,
         query.keywords,
-        query.max_depth,
         query.max_width,
+        query.max_depth,
         query.max_datasud_keywords,
     )
     return data
