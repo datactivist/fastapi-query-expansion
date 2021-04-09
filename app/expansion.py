@@ -4,7 +4,8 @@ from enum import Enum
 from pathlib import Path
 import requests
 
-import requestLexicalResources
+import sql_query
+import request_lexical_resources
 
 data_path = Path("data")
 keyw_path = Path("keywords_vectors")
@@ -27,6 +28,72 @@ class SimilarityType(str, Enum):
     similar = "similar"
 
 
+def compute_feedback_score(keyword1, keyword2):
+
+    """
+    Compute the feedback score
+
+    Input:  keyword1: keyword entered by the user and at the origin of the proposed keyword
+            keyword2: proposed keyword by the expansion API
+
+    Output: Feedback score, default value to -1 if no feedbacks available
+    """
+
+    # get feedback for that particular keyword1 -> keyword2 sequence (TODO: check for similar search?)
+    feedbacks = sql_query.get_feedback_for_expansion(keyword1, keyword2)
+
+    if len(feedbacks) > 0:
+        # Normalize mean of all feedbacks (-1->1 to 0->1)
+        feedback_score = (np.mean(feedbacks) - (-1)) / (1 - (-1))
+    else:
+        # Default value if no feedbacks available
+        feedback_score = -1
+
+
+def combine_similarity_and_feedback_score(feedback_score, similarity_score, alpha=0.5):
+
+    """
+    Compute the combination of embedding similarity and feedback score
+
+    Input:  feedback_score: feedback score computed by compute_feedback_score, if no feedbacks, default to (1 - alpha)
+            similarity_score: similarity between the two keywords
+            alpha: higher alpha = higher feedback weight
+
+    Output: score combination of similarity and feedback
+    """
+
+    if feedback_score == -1:
+        feedback_score = 1 - alpha
+
+    return (1 - alpha) * similarity_score + alpha * feedback_score
+
+
+def use_feedback(original_keyword, keyword_sim_list, alpha=0.5):
+
+    """
+    Apply feedback score to the list of similarity using the compute similarity feedback score method
+
+    Input:  original_keyword: keyword at the origin of the proposed keywords
+            keyword_sim_list: list of tuple of type (keyword, similariy)
+            alpha: higher alpha = higher feedback weight
+
+    Output: list of tuple of type (keyword, similarity) with the newly computed scores
+    """
+
+    new_list = []
+
+    for keyword_sim in keyword_sim_list:
+
+        feedback_score = compute_feedback_score(original_keyword, keyword_sim[0])
+
+        new_sim = combine_similarity_and_feedback_score(
+            feedback_score, keyword_sim[1], alpha
+        )
+        new_list.append((keyword_sim[0], new_sim))
+
+    return new_list
+
+  
 def split_user_entry(user_entry):
     """
     Split the user entry into keywords
@@ -46,6 +113,7 @@ def second_key_from_tuple(tuple):
     """
 
     return tuple[1]
+
 
 
 def get_cluster(keyword, embeddings_type, embeddings_name, width, depth, current_depth):
@@ -86,6 +154,21 @@ def get_cluster(keyword, embeddings_type, embeddings_name, width, depth, current
         print(similar_words["synonym"])
         print()
         print()
+
+        # Apply feedback scores
+        similar_words[SimilarityType.similar] = use_feedback(
+            keyword, similar_words[SimilarityType.similar]
+        )
+
+        # Resort the array with new scores
+        similar_words[SimilarityType.similar] = sort_array_of_tuple_with_second_value(
+            similar_words[SimilarityType.similar]
+        )
+
+        # Remove scores and keep only keywords
+        similar_words[SimilarityType.similar] = remove_second_key_from_array_of_tuple(
+            similar_words[SimilarityType.similar]
+        )
 
         for word in similar_words[SimilarityType.synonym]:
             sub_cluster = {}

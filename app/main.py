@@ -1,8 +1,14 @@
 from __future__ import annotations
+
+import expansion
+import sql_query
+
 import os
 import json
 import numpy as np
 from pathlib import Path
+from enum import Enum
+
 
 import expansion
 import requestLexicalResources
@@ -13,6 +19,71 @@ from typing import List, Tuple, Optional
 
 model_list = {}
 
+
+class Add_Search_Query(BaseModel):
+
+    conversation_id: str
+    user_search: str
+    date: str
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "conversation_id": "51ad8b6a-6924-4c79-a22b-de013e5fe25e",
+                "user_search": "barrage électrique",
+                "date": "2021-03-16 14:31:18",
+            }
+        }
+
+
+class Feedback(int, Enum):
+    chosen = 1
+    notchosen = -1
+    unknown = 0
+
+
+class Keywords_Feedback(BaseModel):
+
+    original_keyword: str
+    proposed_keyword: str
+    feedback: Feedback
+
+
+class Add_Keywords_Feedback_Query(BaseModel):
+
+    conversation_id: str
+    user_search: str
+    data: List[Keywords_Feedback]
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "conversation_id": "51ad8b6a-6924-4c79-a22b-de013e5fe25e",
+                "user_search": "barrage électrique",
+                "data": [
+                    {
+                        "original_keyword": "barrage",
+                        "proposed_keyword": "digue",
+                        "feedback": -1,
+                    },
+                    {
+                        "original_keyword": "barrage",
+                        "proposed_keyword": "digues",
+                        "feedback": -1,
+                    },
+                    {
+                        "original_keyword": "électrique",
+                        "proposed_keyword": "hydrauélectrique",
+                        "feedback": 1,
+                    },
+                    {
+                        "original_keyword": "électrique",
+                        "proposed_keyword": "électricité",
+                        "feedback": -1,
+                    },
+                ],
+            }
+        }
 
 class Referentiel(BaseModel):
 
@@ -209,3 +280,46 @@ async def manage_query_expand(query: Search_Expand_Query):
     print(data)
 
     return data
+
+
+@app.post("/add_search")
+async def add_search(search: Add_Search_Query):
+    """
+    ## Function
+    Store user search
+    ## Parameter
+    ### Required
+    - **conversation_id**: Rasa ID of the conversation
+    - **user_search**: search terms entered by the user
+    - **date**: date of the search [yy-mm-dd hh:mm:ss]
+    """
+
+    sql_query.add_new_search_query(
+        search.conversation_id, search.user_search, search.date, True
+    )
+
+
+@app.post("/add_feedback")
+async def add_keywords_feedback(feedbacks: Add_Keywords_Feedback_Query):
+    """
+    ## Function
+    Store user feedbacks of the keyword expansion
+    ## Parameter
+    ### Required
+    - **user_search**: Search of the user
+    - **data**: List of feedbacks for that search
+        - **original_keyword**: keyword at the origin of the proposition
+        - **proposed_keyword**: proposed keyword
+        - **feedback**: Feedback of the user (proposed keyword chosen or not)
+    """
+
+    for feedback in feedbacks.data:
+        sql_query.add_proposed_keyword_feedback(
+            feedbacks.conversation_id,
+            feedbacks.user_search,
+            feedback.original_keyword,
+            feedback.proposed_keyword,
+            feedback.feedback,
+            True,
+        )
+
