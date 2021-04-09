@@ -1,15 +1,29 @@
 from __future__ import annotations
-import expansion
 import os
 import json
 import numpy as np
 from pathlib import Path
+
+import expansion
+import requestLexicalResources
 
 from fastapi import FastAPI, Query, HTTPException
 from pydantic import BaseModel, Field
 from typing import List, Tuple, Optional
 
 model_list = {}
+
+
+class Referentiel(BaseModel):
+
+    name: str
+    tags: Optional[bool] = True
+    width: Optional[int] = Field(10, ge=0, le=50)
+
+
+class Referentiel_Output(BaseModel):
+
+    tags: Optional[List[str]]
 
 
 class Search_Expand_Query(BaseModel):
@@ -26,7 +40,7 @@ class Search_Expand_Query(BaseModel):
     ] = "frWac_non_lem_no_postag_no_phrase_200_cbow_cut0.magnitude"
     max_depth: Optional[int] = Field(1, ge=0, le=3)
     max_width: Optional[int] = Field(5, ge=0, le=50)
-    max_datasud_keywords: Optional[int] = Field(5, ge=0, le=50)
+    referentiel: Optional[Referentiel]
 
     class Config:
         schema_extra = {
@@ -36,7 +50,7 @@ class Search_Expand_Query(BaseModel):
                 "embeddings_name": "frWac_non_lem_no_postag_no_phrase_200_cbow_cut0.magnitude",
                 "max_depth": 1,
                 "max_width": 5,
-                "max_datasud_keywords": 5,
+                "referentiel": {"name": "datasud"},
             }
         }
 
@@ -61,7 +75,7 @@ class ResponseFromSense(BaseModel):
 
     original_keyword: str
     tree: Optional[List[Cluster]]
-    datasud_keywords: Optional[List[str]]
+    referentiel: Referentiel_Output
 
     class Config:
         schema_extra = {
@@ -114,25 +128,18 @@ class ResponseFromSense(BaseModel):
                         ],
                     },
                 ],
-                "datasud_keywords": [
-                    "éolienne",
-                    "photovoltaïque",
-                    "géothermie",
-                    "biomasse",
-                    "énergie",
-                ],
+                "referentiel": {
+                    "tags": [
+                        "éolienne",
+                        "photovoltaïque",
+                        "géothermie",
+                        "biomasse",
+                        "énergie",
+                    ],
+                },
             }
         }
 
-
-embeddings_path = Path("embeddings")
-# Looping on available .magnitude embeddings to save them in dictionnary
-print("Starting saving embeddings in dictionnary")
-for embeddings in list(embeddings_path.glob("**/*.magnitude")):
-    model_list[embeddings.name] = expansion.MagnitudeModel(
-        embeddings.parent.name, embeddings.name
-    )
-print("Saving done")
 
 # Launch API
 app = FastAPI()
@@ -149,16 +156,18 @@ async def get_embeddings_names(embeddings_type: expansion.EmbeddingsType):
     ## Output
     List of embeddings variant available
     """
-    if embeddings_type != expansion.EmbeddingsType.wordnet:
-        path = Path("./embeddings") / Path(embeddings_type.value)
-        results = []
-        for filename in list(path.glob("**/*.magnitude")):
-            results.append(filename.name)
-        return results
-    else:
-        return [
-            "This API uses the library NLTK, which uses the Open Multilingual Wordnet, which uses the wolf-1.0b4 embeddings, therefore you don't have to specify an embeddings name."
-        ]
+
+    return requestLexicalResources.get_available_embeddings(embeddings_type)
+
+
+@app.get("/help_referentiels")
+async def get_referentiels():
+    """
+    ## Function
+    Return every referentiels available
+    """
+
+    return requestLexicalResources.get_available_referentiels()
 
 
 @app.post("/query_expand", response_model=List[ResponseFromSense])
@@ -174,7 +183,7 @@ async def manage_query_expand(query: Search_Expand_Query):
     - **embeddings_name**: Variant of the embeddings | default value: frWac_non_lem_no_postag_no_phrase_200_cbow_cut0.magnitude
     - **max_depth**: Depth of the keyword search | default value: 1
     - **max_width**: Width of the keyword search | default value: 5 # Ignored when using wordnet
-    - **max_datasud_keywords**: If >0, include the first <max> most similar words from the datasud database for each word | default value: 5
+    - **referentiel**: Referentiel to use | default value: None
     ## Output: 
     list of expand results per keyword
     - **expand result**:
@@ -184,31 +193,19 @@ async def manage_query_expand(query: Search_Expand_Query):
                 - **sense**: sense at the center of the cluster
                 - **similar_words**: list of tuples of type (cluster, similarityType)
                     - **similarityType**: relation between two clusters (similars | synonyms, hyponyms, hypernyms, holonyms when using wordnet)
-        - **datasud_keywords**: list of string
+        - **referentiel**:
+            - **tags**: List of string
     """
 
-    if query.embeddings_type == expansion.EmbeddingsType.bert:
-        raise HTTPException(
-            status_code=501, detail="Bert embeddings not implemented yet"
-        )
-
-    if query.embeddings_type != expansion.EmbeddingsType.wordnet:
-        try:
-            model = model_list[query.embeddings_name]
-        except:
-            raise HTTPException(
-                status_code=404,
-                detail="This embeddings_name doesn't exist for this embeddings_type. You can request the list of embeddings available for a particular embeddings type by requesting get(http/[...]/help_embeddings/{embeddings_type}",
-            )
-    else:
-        model = expansion.WordnetModel()
-        # TODO mettre dans le dict
-
     data = expansion.expand_keywords(
-        model,
         query.keywords,
+        query.embeddings_type,
+        query.embeddings_name,
         query.max_depth,
         query.max_width,
-        query.max_datasud_keywords,
+        query.referentiel,
     )
+
+    print(data)
+
     return data
