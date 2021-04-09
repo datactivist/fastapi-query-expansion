@@ -29,152 +29,7 @@ class SimilarityType(str, Enum):
     similar = "similar"
 
 
-class MagnitudeModel:
-    """
-    Class representing a Magnitude Model
-    Input: Type of the embeddings and name of the embeddings
-    """
-
-    def __init__(self, embeddings_type, embeddings_name):
-        self.embeddings_type = embeddings_type
-        self.embeddings_name = embeddings_name
-        self.model = self.load_model()
-
-    def load_model(self):
-        """
-        load model using Magnitude
-        """
-
-        return Magnitude(
-            embeddings_path / Path(self.embeddings_type + "/" + self.embeddings_name)
-        )
-
-    def similarity(self, keyword1, keyword2):
-        """
-        Compute and return similarity between two words
-
-        Input: Two words of type string
-        Output: Similarity between the two keywords
-        """
-
-        return self.model.similarity(keyword1, keyword2)
-
-    def most_similar(self, keyword, topn=10, slider=0):
-        """
-        Return the nearest neighbors of keyword
-
-        Input:  keyword: a word of type string
-                topn: number of neighbors to get (default: 10)
-                slider: slide the results (default: 0)  - (i.e topn=10 and slider = 2 -> [2-12]) to avoid looping when depth>1
-        Output: Return the topn closest words from keyword
-        """
-
-        similar_words = {}
-        for sim_type in SimilarityType:
-            similar_words[sim_type] = []
-
-        most_similar = self.model.most_similar(keyword, topn=topn + slider)[slider:]
-
-        similar_words[SimilarityType.similar] = [x[0] for x in most_similar]
-
-        return similar_words
-
-    def load_datasud_keywords(self):
-        """
-        Load and return the presaved vectors of Datasud Keywords
-        """
-
-        with open(
-            data_path / Path("datasud_keywords.json"), encoding="utf-16"
-        ) as json_file:
-            db_keywords_strings = json.load(json_file,)["result"]
-
-        db_keywords_vectors = np.load(
-            keyw_path
-            / Path(self.embeddings_type + "/" + self.embeddings_name).with_suffix(
-                ".npy"
-            )
-        )
-
-        return db_keywords_strings, db_keywords_vectors
-
-
-class WordnetModel:
-    """
-    Class representing a WordNet model
-    """
-
-    def __init__(self):
-        self.embeddings_type = EmbeddingsType.wordnet
-        self.embeddings_name = "wolf-b-04.xml"
-
-    def similarity(self, keyword1, keyword2):
-        """
-        Compute and return similarity between two object
-
-        Input: Two keywords of type string, synset, or list of synset
-        Output: Similiarity between the two objets using path_similarity
-        """
-
-        if type(keyword1) == nltk.corpus.reader.wordnet.Synset:
-            keyword1 = [keyword1]
-        elif type(str):
-            keyword1 = wn.synsets(keyword1, lang="fra")
-
-        if type(keyword2) == nltk.corpus.reader.wordnet.Synset:
-            keyword2 = [keyword2]
-        elif type(str):
-            keyword2 = wn.synsets(keyword2, lang="fra")
-
-        sim = 0
-        for k1 in keyword1:
-            for k2 in keyword2:
-                new_sim = k1.path_similarity(k2)
-                if new_sim != None and sim < new_sim:
-                    sim = new_sim
-        return sim
-
-    def most_similar(self, synset, topn=10, slider=0):
-        """
-        Return a dictionnary with the list of similar words and their similarityType
-
-        Input: Synset
-        Output: List of synonyms, hyponyms, hypernyms and holonyms in a dictionnary
-        """
-
-        similar_words = {}
-        for sim_type in SimilarityType:
-            similar_words[sim_type] = []
-
-        if type(synset) == nltk.corpus.reader.wordnet.Synset:
-
-            for synonym in synset.lemma_names("fra"):
-                similar_words[SimilarityType.synonym].append(synonym)
-
-            for hyponym in synset.hyponyms():
-                similar_words[SimilarityType.hyponym].append(hyponym)
-
-            for hypernym in synset.hypernyms():
-                similar_words[SimilarityType.hypernym].append(hypernym)
-
-            for holonym in synset.member_holonyms():
-                similar_words[SimilarityType.holonym].append(holonym)
-
-        return similar_words
-
-    def load_datasud_keywords(self):
-        """
-        Load and return the datasud keywords as a list of string | Twice to keep same behavour as MagnitudeModel
-        """
-
-        with open(
-            data_path / Path("datasud_keywords.json"), encoding="utf-16"
-        ) as json_file:
-            db_keywords = json.load(json_file,)["result"]
-        return db_keywords, db_keywords
-
-
-def get_senses_from_keyword(model, keyword):
+def get_senses_from_keyword(embeddings_type, keyword):
 
     """
     Get the senses from keyword
@@ -186,8 +41,8 @@ def get_senses_from_keyword(model, keyword):
     """
 
     return (
-        wn.synsets(keyword, lang="fra")
-        if model.embeddings_type == EmbeddingsType.wordnet
+        print("TODO")
+        if embeddings_type == EmbeddingsType.wordnet
         else [keyword]
     )
 
@@ -214,73 +69,39 @@ def sort_array_of_tuple_with_second_value(array):
     return array
 
 
-def get_datasud_similarities(model, keyword, min_threshold=0.2):
-
-    """
-    Return the list of similarities between keyword and each datasud keywords
-
-    Input: model: Magnitude model
-           keyword: Keyword to compare to datasud_keywords
-           min_threshold: ignore words with a similarity below this threshold
-
-    Output: List of tuple of type: (dtsud_keyword, similarity)
-    """
-
-    data_sud = []
-
-    dtsud_keywords_strings, dtsud_keywords_vectors = model.load_datasud_keywords()
-
-    for i, dtsud_keyword_vector in enumerate(dtsud_keywords_vectors):
-
-        sim = model.similarity(keyword, dtsud_keyword_vector)
-
-        if sim != 1 and sim > min_threshold:
-            data_sud.append((dtsud_keywords_strings[i], sim))
-
-    return data_sud
-
-
-def get_datasud_keywords(model, keyword, max_k=10):
-
-    """
-    Return the closest datasud keywords from keyword
-
-    Input: model: MagnitudeModel
-           keyword: keyword of type string or synset
-           max_k: number of neighbors to find
-           
-    Output: the max_k most similar datasud keywords
-    """
-
-    sim_list = get_datasud_similarities(model, keyword)
-    sim_list = sort_array_of_tuple_with_second_value(sim_list)
-
-    keyword_list = [x[0] for x in sim_list]
-
-    return keyword_list[:max_k]
-
-
-def get_cluster(model, keyword, max_width, max_depth, current_depth):
+def get_cluster(keyword, embeddings_type, embeddings_name, max_width, max_depth, current_depth):
 
     """
     Recursive function to build the data structure tree
 
-    Input:  keyword: string or synset
-            max_width: width of each cluster #Ignore when using WordnetModel
-            max_depth: depth to achieve
+    Input:  keywords: a string
+            embeddings_type: type of the embeddings
+            embeddings_name: name of the embeddings
+            width: maximum depth of keywords search
+            depth: maximum width of keywords search
             current_depth: current depth
+
     Output: A cluster
     """
 
     cluster = {}
-    cluster["sense"] = str(keyword)
+    if type(keyword) == str:
+        pass
+    elif type(keyword) == dict:
+        keyword = keyword["word"]
+    else:
+        keyword = str(keyword)
+    cluster["sense"] = keyword
     cluster["similar_senses"] = []
 
     if current_depth < max_depth:
 
         # to avoid looping on most similar words
         slider = 1 if current_depth > 0 else 0
-        similar_words = model.most_similar(keyword, max_width, slider)
+
+        similar_words = request_lexical_resources.get_most_similar(
+            keyword, embeddings_type, embeddings_name, max_width, slider
+        )
 
         for word in similar_words[SimilarityType.synonym]:
             sub_cluster = {}
@@ -289,7 +110,7 @@ def get_cluster(model, keyword, max_width, max_depth, current_depth):
 
         for word in similar_words[SimilarityType.similar]:
             sub_cluster = get_cluster(
-                model, word, max_width, max_depth, current_depth + 1
+                word, embeddings_type, embeddings_name, max_width, max_depth, current_depth + 1
             )
             cluster["similar_senses"].append([sub_cluster, SimilarityType.similar])
 
@@ -302,7 +123,7 @@ def get_cluster(model, keyword, max_width, max_depth, current_depth):
             ):
                 for sense in similar_words[sim_type]:
                     sub_cluster = get_cluster(
-                        model, sense, max_width, max_depth, current_depth + 1
+                        sense, embeddings_type, embeddings_name, max_width, max_depth, current_depth + 1
                     )
                     cluster["similar_senses"].append([sub_cluster, sim_type])
 
@@ -312,16 +133,17 @@ def get_cluster(model, keyword, max_width, max_depth, current_depth):
     return cluster
 
 
-def build_tree(model, keyword, max_width, max_depth, max_dtsud_keywords):
+def build_tree(keyword, embeddings_type, embeddings_name, max_depth, max_width, referentiel):
 
     """
     Build the data structure tree for one particular sense list (originating from one keyword)
 
-    Input:  model: MagnitudeModel / WordnetModel
-            senses: a list of senses
-            max_width: maximum width of keywords search
+    Input:  keywords: a string
+            embeddings_type: type of the embeddings
+            embeddings_name: name of the embeddings
             max_depth: maximum depth of keywords search
-            max_dtsud_keywords: number of datasud keywords to return
+            max_width: maximum width of keywords search
+            referentiel: referentiel to use for expansion
     
     Output: Data tree for keyword
     """
@@ -331,33 +153,49 @@ def build_tree(model, keyword, max_width, max_depth, max_dtsud_keywords):
 
     tree = []
 
-    senses = get_senses_from_keyword(model, keyword)
+    senses = get_senses_from_keyword(embeddings_type, keyword)
 
     for sense in senses:
 
-        if max_dtsud_keywords > 0:
-            search_result["datasud_keywords"] = get_datasud_keywords(
-                model, sense, max_dtsud_keywords,
+        if referentiel is not None:
+            results = requestLexicalResources.get_most_similar_referentiels(
+                sense,
+                referentiel.name,
+                embeddings_type,
+                embeddings_name,
+                referentiel.width,
+                0,
             )
 
-        tree.append(get_cluster(model, sense, max_width, max_depth, 0))
+            if type(results) is list:
+                referentiel_output = {
+                    "tags": [result["word"] for result in results]
+                }
+            else:
+                referentiel_output = []
+        else:
+            referentiel_output = []
+        current_search_result["referentiel"] = referentiel_output
+
+        tree.append(get_cluster(sense, embeddings_type, embeddings_name, max_width, max_depth, 0))
 
     search_result["tree"] = tree
 
     return search_result
 
 
-def expand_keywords(model, keywords, max_width, max_depth, max_dtsud_keywords):
-    """
+def expand_keywords(keywords, embeddings_type, embeddings_name, max_depth, max_width, referentiel):
+     """
     Return the most similar keywords from the initial keywords
 
-    Input:  model: MagnitudeModel / WordnetModel
-            keywords: a string
-            max_width: maximum width of keywords search
+    Input:  keywords: a string
+            embeddings_type: type of the embeddings
+            embeddings_name: name of the embeddings
             max_depth: maximum depth of keywords search
-            max_dtsud_keywords: number of datasud keywords to return
-
-    Output: Data structure with most similar keywords found for each keyword
+            max_width: maximum width of keywords search
+            referentiel: object of type main.referentiel
+            
+    Output: Data structure with most similar keywords found
     """
 
     keywords_list = split_user_entry(keywords)
@@ -371,7 +209,7 @@ def expand_keywords(model, keywords, max_width, max_depth, max_dtsud_keywords):
             keyword = keyword.lower()
 
             data.append(
-                build_tree(model, keyword, max_width, max_depth, max_dtsud_keywords)
+                build_tree(keyword, embeddings_type, embeddings_name, max_depth, max_width, referentiel)
             )
 
     return data
