@@ -222,7 +222,7 @@ def build_tree(keyword, embeddings_type, embeddings_name, max_depth, max_width, 
     for sense in senses:
 
         if referentiel is not None:
-            results = requestLexicalResources.get_most_similar_referentiels(
+            results = request_lexical_resources.get_most_similar_referentiels(
                 sense,
                 referentiel.name,
                 embeddings_type,
