@@ -75,9 +75,7 @@ class MagnitudeModel:
 
         most_similar = self.model.most_similar(keyword, topn=topn + slider)[slider:]
 
-        similar_words[SimilarityType.similar] = remove_second_key_from_array_of_tuple(
-            most_similar
-        )
+        similar_words[SimilarityType.similar] = [x[0] for x in most_similar]
 
         return similar_words
 
@@ -207,27 +205,13 @@ def split_user_entry(user_entry):
     return user_entry.split(" ")
 
 
-def second_key_from_tuple(tuple):
-    """
-    Return second value of a tuple, used for sorting array of dimension [n, 2] on the second value
-    """
-
-    return tuple[1]
-
-
 def sort_array_of_tuple_with_second_value(array):
     """
     Return an array of tuple sorted by second key values
     """
 
-    array.sort(key=second_key_from_tuple, reverse=True)
-
+    array.sort(key=lambda x: x[1], reverse=True)
     return array
-
-
-def remove_second_key_from_array_of_tuple(array):
-
-    return [array[i][0] for i in range(len(array))]
 
 
 def get_datasud_similarities(model, keyword, min_threshold=0.2):
@@ -271,7 +255,7 @@ def get_datasud_keywords(model, keyword, max_k=10):
     sim_list = get_datasud_similarities(model, keyword)
     sim_list = sort_array_of_tuple_with_second_value(sim_list)
 
-    keyword_list = remove_second_key_from_array_of_tuple(sim_list)
+    keyword_list = [x[0] for x in sim_list]
 
     return keyword_list[:max_k]
 

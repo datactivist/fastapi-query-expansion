@@ -70,13 +70,6 @@ def test_split_keywords():
     assert expansion.split_user_entry(keywords) == ["barrage", "électrique"]
 
 
-def test_second_key_from_tuple():
-
-    mytuple = ["hydrauélectrique", 0.8974]
-
-    assert expansion.second_key_from_tuple(mytuple) == mytuple[1]
-
-
 def test_sort_array_of_tuple_with_second_value():
 
     myarray = [["chat", 0.2345], ["hydrauélectrique", 0.8974], ["chien", 0.340]]
