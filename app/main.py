@@ -11,7 +11,7 @@ from enum import Enum
 
 
 import expansion
-import requestLexicalResources
+import request_lexical_resources
 
 from fastapi import FastAPI, Query, HTTPException
 from pydantic import BaseModel, Field
@@ -84,6 +84,7 @@ class Add_Keywords_Feedback_Query(BaseModel):
                 ],
             }
         }
+
 
 class Referentiel(BaseModel):
 
@@ -228,7 +229,7 @@ async def get_embeddings_names(embeddings_type: expansion.EmbeddingsType):
     List of embeddings variant available
     """
 
-    return requestLexicalResources.get_available_embeddings(embeddings_type)
+    return request_lexical_resources.get_available_embeddings(embeddings_type)
 
 
 @app.get("/help_referentiels")
@@ -238,7 +239,7 @@ async def get_referentiels():
     Return every referentiels available
     """
 
-    return requestLexicalResources.get_available_referentiels()
+    return request_lexical_resources.get_available_referentiels()
 
 
 @app.post("/query_expand", response_model=List[ResponseFromSense])
