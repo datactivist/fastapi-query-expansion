@@ -3,7 +3,7 @@ import numpy as np
 from enum import Enum
 from pathlib import Path
 
-import sqlQuery
+import sql_query
 
 from nltk.corpus import wordnet as wn
 import nltk
@@ -187,7 +187,7 @@ def compute_feedback_score(keyword1, keyword2):
     """
 
     # get feedback for that particular keyword1 -> keyword2 sequence (TODO: check for similar search?)
-    feedbacks = sqlQuery.get_feedback_for_expansion(keyword1, keyword2)
+    feedbacks = sql_query.get_feedback_for_expansion(keyword1, keyword2)
 
     if len(feedbacks) > 0:
         # Normalize mean of all feedbacks (-1->1 to 0->1)

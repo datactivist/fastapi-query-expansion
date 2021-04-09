@@ -1,6 +1,6 @@
 from __future__ import annotations
 import expansion
-import sqlQuery
+import sql_query
 import os
 import json
 import numpy as np
@@ -296,7 +296,7 @@ async def add_search(search: Add_Search_Query):
     - **date**: date of the search [yy-mm-dd hh:mm:ss]
     """
 
-    sqlQuery.add_new_search_query(
+    sql_query.add_new_search_query(
         search.conversation_id, search.user_search, search.date, True
     )
 
@@ -316,7 +316,7 @@ async def add_keywords_feedback(feedbacks: Add_Keywords_Feedback_Query):
     """
 
     for feedback in feedbacks.data:
-        sqlQuery.add_proposed_keyword_feedback(
+        sql_query.add_proposed_keyword_feedback(
             feedbacks.conversation_id,
             feedbacks.user_search,
             feedback.original_keyword,
