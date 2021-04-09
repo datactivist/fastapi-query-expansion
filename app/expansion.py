@@ -28,6 +28,23 @@ class SimilarityType(str, Enum):
     similar = "similar"
 
 
+def get_senses_from_keyword(embeddings_type, keyword):
+
+    """
+    Get the senses from keyword
+
+    if model is wordnet: list of synset
+    if model is not wordnet: list of size 1 containing only keyword
+
+    output: list of senses
+    """
+
+    return (
+        print("TODO")
+        if embeddings_type == EmbeddingsType.wordnet
+        else [keyword]
+    )
+
 def compute_feedback_score(keyword1, keyword2):
 
     """
@@ -107,24 +124,27 @@ def split_user_entry(user_entry):
     return user_entry.split(" ")
 
 
-def second_key_from_tuple(tuple):
+def sort_array_of_tuple_with_second_value(array):
     """
-    Return second value of a tuple, used for sorting array of dimension [n, 2] on the second value
+    Return an array of tuple sorted by second key values
     """
 
-    return tuple[1]
+    array.sort(key=lambda x: x[1], reverse=True)
+    return array
 
 
-
-def get_cluster(keyword, embeddings_type, embeddings_name, width, depth, current_depth):
+def get_cluster(keyword, embeddings_type, embeddings_name, max_width, max_depth, current_depth):
 
     """
     Recursive function to build the data structure tree
 
-    Input:  keyword: string or synset
-            width: width of each cluster #Ignore when using WordnetModel
-            depth: depth to achieve
+    Input:  keywords: a string
+            embeddings_type: type of the embeddings
+            embeddings_name: name of the embeddings
+            width: maximum depth of keywords search
+            depth: maximum width of keywords search
             current_depth: current depth
+
     Output: A cluster
     """
 
@@ -136,38 +156,15 @@ def get_cluster(keyword, embeddings_type, embeddings_name, width, depth, current
     else:
         keyword = str(keyword)
     cluster["sense"] = keyword
-
     cluster["similar_senses"] = []
 
-    if current_depth < depth:
+    if current_depth < max_depth:
 
         # to avoid looping on most similar words
         slider = 1 if current_depth > 0 else 0
 
-        print(keyword)
-
-        similar_words = requestLexicalResources.get_most_similar(
-            keyword, embeddings_type, embeddings_name, width, slider
-        )
-
-        print(similar_words)
-        print(similar_words["synonym"])
-        print()
-        print()
-
-        # Apply feedback scores
-        similar_words[SimilarityType.similar] = use_feedback(
-            keyword, similar_words[SimilarityType.similar]
-        )
-
-        # Resort the array with new scores
-        similar_words[SimilarityType.similar] = sort_array_of_tuple_with_second_value(
-            similar_words[SimilarityType.similar]
-        )
-
-        # Remove scores and keep only keywords
-        similar_words[SimilarityType.similar] = remove_second_key_from_array_of_tuple(
-            similar_words[SimilarityType.similar]
+        similar_words = request_lexical_resources.get_most_similar(
+            keyword, embeddings_type, embeddings_name, max_width, slider
         )
 
         for word in similar_words[SimilarityType.synonym]:
@@ -177,11 +174,11 @@ def get_cluster(keyword, embeddings_type, embeddings_name, width, depth, current
 
         for word in similar_words[SimilarityType.similar]:
             sub_cluster = get_cluster(
-                word, embeddings_type, embeddings_name, width, depth, current_depth + 1
+                word, embeddings_type, embeddings_name, max_width, max_depth, current_depth + 1
             )
             cluster["similar_senses"].append([sub_cluster, SimilarityType.similar])
 
-    if current_depth + 1 < depth:
+    if current_depth + 1 < max_depth:
 
         for sim_type in SimilarityType:
             if (
@@ -190,12 +187,7 @@ def get_cluster(keyword, embeddings_type, embeddings_name, width, depth, current
             ):
                 for sense in similar_words[sim_type]:
                     sub_cluster = get_cluster(
-                        sense,
-                        embeddings_type,
-                        embeddings_name,
-                        width,
-                        depth,
-                        current_depth + 1,
+                        sense, embeddings_type, embeddings_name, max_width, max_depth, current_depth + 1
                     )
                     cluster["similar_senses"].append([sub_cluster, sim_type])
 
@@ -205,10 +197,59 @@ def get_cluster(keyword, embeddings_type, embeddings_name, width, depth, current
     return cluster
 
 
-def expand_keywords(
-    keywords, embeddings_type, embeddings_name, max_depth, max_width, referentiel
-):
+def build_tree(keyword, embeddings_type, embeddings_name, max_depth, max_width, referentiel):
+
     """
+    Build the data structure tree for one particular sense list (originating from one keyword)
+
+    Input:  keywords: a string
+            embeddings_type: type of the embeddings
+            embeddings_name: name of the embeddings
+            max_depth: maximum depth of keywords search
+            max_width: maximum width of keywords search
+            referentiel: referentiel to use for expansion
+    
+    Output: Data tree for keyword
+    """
+
+    search_result = {}
+    search_result["original_keyword"] = keyword
+
+    tree = []
+
+    senses = get_senses_from_keyword(embeddings_type, keyword)
+
+    for sense in senses:
+
+        if referentiel is not None:
+            results = requestLexicalResources.get_most_similar_referentiels(
+                sense,
+                referentiel.name,
+                embeddings_type,
+                embeddings_name,
+                referentiel.width,
+                0,
+            )
+
+            if type(results) is list:
+                referentiel_output = {
+                    "tags": [result["word"] for result in results]
+                }
+            else:
+                referentiel_output = []
+        else:
+            referentiel_output = []
+        current_search_result["referentiel"] = referentiel_output
+
+        tree.append(get_cluster(sense, embeddings_type, embeddings_name, max_width, max_depth, 0))
+
+    search_result["tree"] = tree
+
+    return search_result
+
+
+def expand_keywords(keywords, embeddings_type, embeddings_name, max_depth, max_width, referentiel):
+     """
     Return the most similar keywords from the initial keywords
 
     Input:  keywords: a string
@@ -217,56 +258,22 @@ def expand_keywords(
             max_depth: maximum depth of keywords search
             max_width: maximum width of keywords search
             referentiel: object of type main.referentiel
+            
     Output: Data structure with most similar keywords found
     """
 
-    keywords = split_user_entry(keywords)
+    keywords_list = split_user_entry(keywords)
 
     data = []
 
-    for keyword in keywords:
+    for keyword in keywords_list:
+
         if len(keyword) > 3:
 
             keyword = keyword.lower()
 
-            # Generate list of sense for wordnet (just a list of size 1 if other embeddings type)
-            senses = (
-                wn.synsets(keyword, lang="fra")
-                if embeddings_type == EmbeddingsType.wordnet
-                else [keyword]
+            data.append(
+                build_tree(keyword, embeddings_type, embeddings_name, max_depth, max_width, referentiel)
             )
-
-            current_tree = []
-            current_search_result = {}
-            current_search_result["original_keyword"] = keyword
-
-            for sense in senses:
-
-                if referentiel is not None:
-                    results = requestLexicalResources.get_most_similar_referentiels(
-                        sense,
-                        referentiel.name,
-                        embeddings_type,
-                        embeddings_name,
-                        referentiel.width,
-                        0,
-                    )
-
-                    if type(results) is list:
-                        referentiel_output = {
-                            "tags": [result["word"] for result in results]
-                        }
-                    else:
-                        referentiel_output = []
-                    current_search_result["referentiel"] = referentiel_output
-
-                current_tree.append(
-                    get_cluster(
-                        sense, embeddings_type, embeddings_name, max_width, max_depth, 0
-                    )
-                )
-
-            current_search_result["tree"] = current_tree
-            data.append(current_search_result)
 
     return data
