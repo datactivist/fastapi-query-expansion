@@ -176,9 +176,9 @@ def get_feedback_for_expansion(keyword1, keyword2):
         )
 
         feedbacks_list = []
-        for feedback in record:
-            feedbacks_list.append(feedback[0])
-
+        if record is not None and len(record) > 0:
+            for feedback in record:
+                feedbacks_list.append(feedback[0])
         return feedbacks_list
 
     except sqlite3.Error as error:
