@@ -278,8 +278,6 @@ async def manage_query_expand(query: Search_Expand_Query):
         query.referentiel,
     )
 
-    print(data)
-
     return data
 
 

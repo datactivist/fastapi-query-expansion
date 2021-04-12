@@ -1,4 +1,4 @@
-CREATE TABLE search_expansion (
+CREATE TABLE search_expansion_feedback (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,	
     "search_id" INTEGER NOT NULL,
     "keyword_used" VARCHAR (255) NOT NULL,
@@ -11,6 +11,6 @@ CREATE TABLE search_expansion (
 CREATE TABLE search (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
     "conversation_id" VARCHAR(255) NOT NULL, 
-	"keywords_user" VARCHAR(255) NOT NULL,
+	"user_search" VARCHAR(255) NOT NULL,
     "date" DATETIME NOT NULL
 );

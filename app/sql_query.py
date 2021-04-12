@@ -1,7 +1,7 @@
 import sqlite3
 from datetime import datetime
 
-database = "data/user_feedback.db"
+database = "data/user_expansion_feedback.db"
 
 # Parameter: Database pointer, sql command, and the data used for the command
 # Function: Run the sql command
@@ -115,7 +115,7 @@ def add_proposed_keyword_feedback(
                 cursor, search_id, proposed_keyword
             )
 
-            if len(record) > 0:
+            if record is not None and len(record) > 0:
 
                 update_proposed_keyword_feedback(cursor, record[0][0], feedback)
 
@@ -146,10 +146,40 @@ def get_search_id(cursor, conversation_id, user_search):
             cursor, sqlite_get_search_id_query, (conversation_id, user_search)
         )
 
-        if len(record) > 0:
+        if record is not None and len(record) > 0:
             return record[0][0]
         else:
             return None
 
     except sqlite3.Error as error:
         print("-GET_SEARCH_ID-\nError while connecting to sqlite", error, "\n")
+
+
+def get_feedback_for_expansion(keyword1, keyword2):
+
+    """
+    Input:  user_keyword: keyword entered by the user
+            proposed_keyword: keyword proposed to the user
+
+    Output: List of feedbacks corresponding to the couple (user_search, result)        
+    """
+
+    try:
+
+        sqliteConnection = sqlite3.connect(database)
+        cursor = sqliteConnection.cursor()
+
+        sqlite_get_feedback_query = "SELECT feedback FROM search_expansion_feedback WHERE keyword_used = ? AND keyword_proposed = ?;"
+
+        record = run_sql_command(
+            cursor, sqlite_get_feedback_query, (keyword1, keyword2)
+        )
+
+        feedbacks_list = []
+        for feedback in record:
+            feedbacks_list.append(feedback[0])
+
+        return feedbacks_list
+
+    except sqlite3.Error as error:
+        print("-GET_FEEDBACK-\nError while connecting to sqlite", error, "\n")

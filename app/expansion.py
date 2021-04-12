@@ -39,11 +39,8 @@ def get_senses_from_keyword(embeddings_type, keyword):
     output: list of senses
     """
 
-    return (
-        print("TODO")
-        if embeddings_type == EmbeddingsType.wordnet
-        else [keyword]
-    )
+    return print("TODO") if embeddings_type == EmbeddingsType.wordnet else [keyword]
+
 
 def compute_feedback_score(keyword1, keyword2):
 
@@ -59,12 +56,14 @@ def compute_feedback_score(keyword1, keyword2):
     # get feedback for that particular keyword1 -> keyword2 sequence (TODO: check for similar search?)
     feedbacks = sql_query.get_feedback_for_expansion(keyword1, keyword2)
 
-    if len(feedbacks) > 0:
-        # Normalize mean of all feedbacks (-1->1 to 0->1)
+    if feedbacks is not None and len(feedbacks) > 0:
+        # Normalize mean of all feedbacks (-1->0 to 0->1)
         feedback_score = (np.mean(feedbacks) - (-1)) / (1 - (-1))
     else:
         # Default value if no feedbacks available
         feedback_score = -1
+
+    return feedback_score
 
 
 def combine_similarity_and_feedback_score(feedback_score, similarity_score, alpha=0.5):
@@ -106,11 +105,14 @@ def use_feedback(original_keyword, keyword_sim_list, alpha=0.5):
         new_sim = combine_similarity_and_feedback_score(
             feedback_score, keyword_sim[1], alpha
         )
+
+        print(keyword_sim[0], ":", keyword_sim[1], "->", new_sim)
+
         new_list.append((keyword_sim[0], new_sim))
 
     return new_list
 
-  
+
 def split_user_entry(user_entry):
     """
     Split the user entry into keywords
@@ -133,7 +135,9 @@ def sort_array_of_tuple_with_second_value(array):
     return array
 
 
-def get_cluster(keyword, embeddings_type, embeddings_name, max_width, max_depth, current_depth):
+def get_cluster(
+    keyword, embeddings_type, embeddings_name, max_width, max_depth, current_depth
+):
 
     """
     Recursive function to build the data structure tree
@@ -174,7 +178,12 @@ def get_cluster(keyword, embeddings_type, embeddings_name, max_width, max_depth,
 
         for word in similar_words[SimilarityType.similar]:
             sub_cluster = get_cluster(
-                word, embeddings_type, embeddings_name, max_width, max_depth, current_depth + 1
+                word,
+                embeddings_type,
+                embeddings_name,
+                max_width,
+                max_depth,
+                current_depth + 1,
             )
             cluster["similar_senses"].append([sub_cluster, SimilarityType.similar])
 
@@ -187,7 +196,12 @@ def get_cluster(keyword, embeddings_type, embeddings_name, max_width, max_depth,
             ):
                 for sense in similar_words[sim_type]:
                     sub_cluster = get_cluster(
-                        sense, embeddings_type, embeddings_name, max_width, max_depth, current_depth + 1
+                        sense,
+                        embeddings_type,
+                        embeddings_name,
+                        max_width,
+                        max_depth,
+                        current_depth + 1,
                     )
                     cluster["similar_senses"].append([sub_cluster, sim_type])
 
@@ -197,7 +211,9 @@ def get_cluster(keyword, embeddings_type, embeddings_name, max_width, max_depth,
     return cluster
 
 
-def build_tree(keyword, embeddings_type, embeddings_name, max_depth, max_width, referentiel):
+def build_tree(
+    keyword, embeddings_type, embeddings_name, max_depth, max_width, referentiel
+):
 
     """
     Build the data structure tree for one particular sense list (originating from one keyword)
@@ -222,6 +238,7 @@ def build_tree(keyword, embeddings_type, embeddings_name, max_depth, max_width, 
     for sense in senses:
 
         if referentiel is not None:
+
             results = request_lexical_resources.get_most_similar_referentiels(
                 sense,
                 referentiel.name,
@@ -231,25 +248,34 @@ def build_tree(keyword, embeddings_type, embeddings_name, max_depth, max_width, 
                 0,
             )
 
-            if type(results) is list:
-                referentiel_output = {
-                    "tags": [result["word"] for result in results]
-                }
-            else:
-                referentiel_output = []
+            keyword_sim_list = []
+            for result in results:
+                keyword_sim_list.append((result["word"], result["similarity"]))
+            keyword_sim_list = use_feedback(sense, keyword_sim_list)
+            keyword_sim_list = sort_array_of_tuple_with_second_value(keyword_sim_list)
+
+            referentiel_output = {"tags": [x[0] for x in keyword_sim_list]}
+
         else:
             referentiel_output = []
-        current_search_result["referentiel"] = referentiel_output
 
-        tree.append(get_cluster(sense, embeddings_type, embeddings_name, max_width, max_depth, 0))
+        search_result["referentiel"] = referentiel_output
+
+        tree.append(
+            get_cluster(
+                sense, embeddings_type, embeddings_name, max_width, max_depth, 0
+            )
+        )
 
     search_result["tree"] = tree
 
     return search_result
 
 
-def expand_keywords(keywords, embeddings_type, embeddings_name, max_depth, max_width, referentiel):
-     """
+def expand_keywords(
+    keywords, embeddings_type, embeddings_name, max_depth, max_width, referentiel
+):
+    """
     Return the most similar keywords from the initial keywords
 
     Input:  keywords: a string
@@ -265,15 +291,17 @@ def expand_keywords(keywords, embeddings_type, embeddings_name, max_depth, max_w
     keywords_list = split_user_entry(keywords)
 
     data = []
-
     for keyword in keywords_list:
-
         if len(keyword) > 3:
-
             keyword = keyword.lower()
-
             data.append(
-                build_tree(keyword, embeddings_type, embeddings_name, max_depth, max_width, referentiel)
+                build_tree(
+                    keyword,
+                    embeddings_type,
+                    embeddings_name,
+                    max_depth,
+                    max_width,
+                    referentiel,
+                )
             )
-
     return data
