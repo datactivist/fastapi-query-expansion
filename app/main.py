@@ -24,6 +24,7 @@ class Add_Search_Query(BaseModel):
 
     conversation_id: str
     user_search: str
+    portail: str
     date: str
 
     class Config:
@@ -290,11 +291,12 @@ async def add_search(search: Add_Search_Query):
     ### Required
     - **conversation_id**: Rasa ID of the conversation
     - **user_search**: search terms entered by the user
+    - **portail**: data portal where the search is done
     - **date**: date of the search [yy-mm-dd hh:mm:ss]
     """
 
     sql_query.add_new_search_query(
-        search.conversation_id, search.user_search, search.date, True
+        search.conversation_id, search.user_search, search.portail, search.date
     )
 
 
@@ -319,6 +321,5 @@ async def add_keywords_feedback(feedbacks: Add_Keywords_Feedback_Query):
             feedback.original_keyword,
             feedback.proposed_keyword,
             feedback.feedback,
-            True,
         )
 

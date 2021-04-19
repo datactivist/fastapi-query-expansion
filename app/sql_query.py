@@ -66,25 +66,21 @@ def insert_proposed_keyword_feedback(
 
 
 # Function: Add a new search entry in the database
-def add_new_search_query(
-    conversation_id, user_search, date, flag_activate_sql_query_commit
-):
+def add_new_search_query(conversation_id, user_search, portail, date):
 
     try:
 
         sqliteConnection = sqlite3.connect(database)
         cursor = sqliteConnection.cursor()
 
-        sqlite_insert_feedback_query = (
-            "INSERT INTO search(conversation_id, user_search, date) VALUES(?, ?, ?);"
-        )
+        sqlite_insert_feedback_query = "INSERT INTO search(conversation_id, user_search, portail, date) VALUES(?, ?, ?, ?);"
         run_sql_command(
-            cursor, sqlite_insert_feedback_query, (conversation_id, user_search, date),
+            cursor,
+            sqlite_insert_feedback_query,
+            (conversation_id, user_search, portail, date),
         )
 
-        if flag_activate_sql_query_commit:
-            sqliteConnection.commit()
-
+        sqliteConnection.commit()
         cursor.close()
         sqliteConnection.close()
 
@@ -94,12 +90,7 @@ def add_new_search_query(
 
 # Function: Add the keyword proposed in the database
 def add_proposed_keyword_feedback(
-    conversation_id,
-    search,
-    original_keyword,
-    proposed_keyword,
-    feedback,
-    flag_activate_sql_query_commit,
+    conversation_id, search, original_keyword, proposed_keyword, feedback
 ):
 
     try:
@@ -107,7 +98,9 @@ def add_proposed_keyword_feedback(
         sqliteConnection = sqlite3.connect(database)
         cursor = sqliteConnection.cursor()
 
-        search_id = get_search_id(cursor, conversation_id, search)
+        search_id = get_search_id_from_conv_id_and_search(
+            cursor, conversation_id, search
+        )
 
         if search_id is not None:
 
@@ -125,8 +118,7 @@ def add_proposed_keyword_feedback(
                     cursor, search_id, original_keyword, proposed_keyword, feedback
                 )
 
-            if flag_activate_sql_query_commit:
-                sqliteConnection.commit()
+            sqliteConnection.commit()
 
         cursor.close()
         sqliteConnection.close()
@@ -135,18 +127,34 @@ def add_proposed_keyword_feedback(
         print("-ADD_FEEDBACK_EXPANSION-\nError while connecting to sqlite", error, "\n")
 
 
-# Return the search_id corresponding to these parameters
-def get_search_id(cursor, conversation_id, user_search):
+def get_search_id_from_conv_id_and_search(
+    cursor, conversation_id, user_search, portail=None
+):
+
+    """
+    Input:  conversation_id: id of the conversation the search was done
+            user_search: search entered by the user
+            portail: if you want to use a particular portail
+
+    Output: search_id corresponding to the couple (conversation_id, user_search)        
+    """
 
     try:
 
-        sqlite_get_search_id_query = "SELECT id FROM search where conversation_id = ? and user_search = ? ORDER BY id DESC;"
+        if portail == None:
+            sqlite_get_search_id_query = "SELECT id FROM search where conversation_id = ? and user_search = ? ORDER BY id DESC;"
+            record = run_sql_command(
+                cursor, sqlite_get_search_id_query, (conversation_id, user_search)
+            )
+        else:
+            sqlite_get_search_id_query = "SELECT id FROM search where conversation_id = ? and user_search = ? and portail = ? ORDER BY id DESC;"
+            record = run_sql_command(
+                cursor,
+                sqlite_get_search_id_query,
+                (conversation_id, user_search, portail),
+            )
 
-        record = run_sql_command(
-            cursor, sqlite_get_search_id_query, (conversation_id, user_search)
-        )
-
-        if record is not None and len(record) > 0:
+        if record != None and len(record) > 0:
             return record[0][0]
         else:
             return None
