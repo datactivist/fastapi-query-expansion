@@ -45,8 +45,8 @@ update_config()
     # ----- Modifying expansion.py -----
     if [ $deployment_method == "local" ]; then
         echo "Updating lexical_resources access in expansion.py"
-        sudo sed -i "s/lexical_resources_API_host_name = .*/lexical_resources_API_host_name = '$lexical_resources_API_host_name'/" app/request_lexical_resources.py
-        sudo sed -i "s/lexical_resources_API_port = .*/lexical_resources_API_port = '$lexical_resources_API_port'/" app/request_lexical_resources.py
+        sed -i "s/lexical_resources_API_host_name = .*/lexical_resources_API_host_name = '$lexical_resources_API_host_name'/" app/request_lexical_resources.py
+        sed -i "s/lexical_resources_API_port = .*/lexical_resources_API_port = '$lexical_resources_API_port'/" app/request_lexical_resources.py
         echo ""
     fi
 
