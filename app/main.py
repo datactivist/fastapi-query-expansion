@@ -3,7 +3,6 @@ from __future__ import annotations
 import expansion
 import sql_query
 
-import os
 import json
 import numpy as np
 from pathlib import Path
