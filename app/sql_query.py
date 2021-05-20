@@ -191,3 +191,57 @@ def get_feedback_for_expansion(keyword1, keyword2):
 
     except sqlite3.Error as error:
         print("-GET_FEEDBACK-\nError while connecting to sqlite", error, "\n")
+
+
+def copy_database_feedbacks():
+
+    """
+    Return a copy of the database content in JSON format
+    """
+
+    try:
+
+        sqliteConnection = sqlite3.connect(database)
+        cursor = sqliteConnection.cursor()
+
+        sqlite_get_search_list_query = "SELECT * FROM search"
+
+        database_copy = []
+
+        search_list = run_sql_command(cursor, sqlite_get_search_list_query, None)
+
+        for search in search_list:
+
+            sqlite_get_search_data_query = (
+                "SELECT * from search_expansion_feedback WHERE search_id = "
+                + str(search[0])
+            )
+            search_data_list = run_sql_command(
+                cursor, sqlite_get_search_data_query, None
+            )
+
+            feedbacks = []
+
+            for data in search_data_list:
+                feedbacks.append(
+                    {
+                        "original_keyword": data[2],
+                        "proposed_keyword": data[3],
+                        "feedback": data[4],
+                    }
+                )
+
+            database_copy.append(
+                {
+                    "user_search": search[2],
+                    "portail": search[3],
+                    "date": search[4],
+                    "feedbacks": feedbacks,
+                }
+            )
+
+        return database_copy
+
+    except sqlite3.Error as error:
+        print("-GET_COPY-\nError while connecting to sqlite:", error, "\n")
+        return []

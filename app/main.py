@@ -86,6 +86,50 @@ class Add_Keywords_Feedback_Query(BaseModel):
         }
 
 
+class databaseFeedbacksCopy(BaseModel):
+
+    user_search: str
+    portail: str
+    date: str
+    feedbacks: List[Keywords_Feedback]
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "user_search": "barrage",
+                "portail": "datasud",
+                "date": "2021-04-16 12:15:11",
+                "feedbacks": [
+                    {
+                        "original_keyword": "barrage",
+                        "proposed_keyword": "digue",
+                        "feedback": -1,
+                    },
+                    {
+                        "original_keyword": "barrage",
+                        "proposed_keyword": "digues",
+                        "feedback": -1,
+                    },
+                    {
+                        "original_keyword": "barrage",
+                        "proposed_keyword": "inondation",
+                        "feedback": -1,
+                    },
+                    {
+                        "original_keyword": "barrage",
+                        "proposed_keyword": "crue",
+                        "feedback": -1,
+                    },
+                    {
+                        "original_keyword": "barrage",
+                        "proposed_keyword": "Hydraulique",
+                        "feedback": 1,
+                    },
+                ],
+            },
+        }
+
+
 class Referentiel(BaseModel):
 
     name: str
@@ -240,6 +284,16 @@ async def get_referentiels():
     """
 
     return request_lexical_resources.get_available_referentiels()
+
+
+@app.get("/copy_feedbacks", response_model=List[databaseFeedbacksCopy])
+async def copy_keywords_feedback():
+    """
+    ## Function
+    Copy all the database feedbacks and return it as a JSON object
+    """
+
+    return sql_query.copy_database_feedbacks()
 
 
 @app.post("/query_expand", response_model=List[ResponseFromSense])
