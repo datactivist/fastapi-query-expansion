@@ -66,18 +66,18 @@ def insert_proposed_keyword_feedback(
 
 
 # Function: Add a new search entry in the database
-def add_new_search_query(conversation_id, user_search, portail, date):
+def add_new_search_query(conversation_id, user_search, portal, date):
 
     try:
 
         sqliteConnection = sqlite3.connect(database)
         cursor = sqliteConnection.cursor()
 
-        sqlite_insert_feedback_query = "INSERT INTO search(conversation_id, user_search, portail, date) VALUES(?, ?, ?, ?);"
+        sqlite_insert_feedback_query = "INSERT INTO search(conversation_id, user_search, portal, date) VALUES(?, ?, ?, ?);"
         run_sql_command(
             cursor,
             sqlite_insert_feedback_query,
-            (conversation_id, user_search, portail, date),
+            (conversation_id, user_search, portal, date),
         )
 
         sqliteConnection.commit()
@@ -128,30 +128,30 @@ def add_proposed_keyword_feedback(
 
 
 def get_search_id_from_conv_id_and_search(
-    cursor, conversation_id, user_search, portail=None
+    cursor, conversation_id, user_search, portal=None
 ):
 
     """
     Input:  conversation_id: id of the conversation the search was done
             user_search: search entered by the user
-            portail: if you want to use a particular portail
+            portal: if you want to use a particular portal
 
     Output: search_id corresponding to the couple (conversation_id, user_search)        
     """
 
     try:
 
-        if portail == None:
+        if portal == None:
             sqlite_get_search_id_query = "SELECT id FROM search where conversation_id = ? and user_search = ? ORDER BY id DESC;"
             record = run_sql_command(
                 cursor, sqlite_get_search_id_query, (conversation_id, user_search)
             )
         else:
-            sqlite_get_search_id_query = "SELECT id FROM search where conversation_id = ? and user_search = ? and portail = ? ORDER BY id DESC;"
+            sqlite_get_search_id_query = "SELECT id FROM search where conversation_id = ? and user_search = ? and portal = ? ORDER BY id DESC;"
             record = run_sql_command(
                 cursor,
                 sqlite_get_search_id_query,
-                (conversation_id, user_search, portail),
+                (conversation_id, user_search, portal),
             )
 
         if record != None and len(record) > 0:
@@ -193,7 +193,7 @@ def get_feedback_for_expansion(keyword1, keyword2):
         print("-GET_FEEDBACK-\nError while connecting to sqlite", error, "\n")
 
 
-def copy_database_feedbacks():
+def extract_database_feedbacks():
 
     """
     Return a copy of the database content in JSON format
@@ -220,21 +220,19 @@ def copy_database_feedbacks():
                 cursor, sqlite_get_search_data_query, None
             )
 
-            feedbacks = []
-
-            for data in search_data_list:
-                feedbacks.append(
-                    {
-                        "original_keyword": data[2],
-                        "proposed_keyword": data[3],
-                        "feedback": data[4],
-                    }
-                )
+            feedbacks = [
+                {
+                    "original_keyword": data[2],
+                    "proposed_keyword": data[3],
+                    "feedback": data[4],
+                }
+                for data in search_data_list
+            ]
 
             database_copy.append(
                 {
                     "user_search": search[2],
-                    "portail": search[3],
+                    "portal": search[3],
                     "date": search[4],
                     "feedbacks": feedbacks,
                 }
@@ -243,5 +241,5 @@ def copy_database_feedbacks():
         return database_copy
 
     except sqlite3.Error as error:
-        print("-GET_COPY-\nError while connecting to sqlite:", error, "\n")
+        print("-EXTRACTION_FEEDBACKS-\nError while connecting to sqlite:", error, "\n")
         return []

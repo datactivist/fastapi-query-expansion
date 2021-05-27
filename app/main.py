@@ -12,7 +12,7 @@ from enum import Enum
 import expansion
 import request_lexical_resources
 
-from fastapi import FastAPI, Query, HTTPException
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from typing import List, Tuple, Optional
 
@@ -23,7 +23,7 @@ class Add_Search_Query(BaseModel):
 
     conversation_id: str
     user_search: str
-    portail: str
+    portal: str
     date: str
 
     class Config:
@@ -86,10 +86,10 @@ class Add_Keywords_Feedback_Query(BaseModel):
         }
 
 
-class databaseFeedbacksCopy(BaseModel):
+class databaseFeedbacksExtraction(BaseModel):
 
     user_search: str
-    portail: str
+    portal: str
     date: str
     feedbacks: List[Keywords_Feedback]
 
@@ -97,7 +97,7 @@ class databaseFeedbacksCopy(BaseModel):
         schema_extra = {
             "example": {
                 "user_search": "barrage",
-                "portail": "datasud",
+                "portal": "datasud",
                 "date": "2021-04-16 12:15:11",
                 "feedbacks": [
                     {
@@ -286,14 +286,14 @@ async def get_referentiels():
     return request_lexical_resources.get_available_referentiels()
 
 
-@app.get("/copy_feedbacks", response_model=List[databaseFeedbacksCopy])
-async def copy_keywords_feedback():
+@app.get("/extract_all_feedbacks", response_model=List[databaseFeedbacksExtraction])
+async def extract_keywords_feedback():
     """
     ## Function
-    Copy all the database feedbacks and return it as a JSON object
+    Extract all the database feedbacks and return it as a JSON object
     """
 
-    return sql_query.copy_database_feedbacks()
+    return sql_query.extract_database_feedbacks()
 
 
 @app.post("/query_expand", response_model=List[ResponseFromSense])
@@ -344,12 +344,12 @@ async def add_search(search: Add_Search_Query):
     ### Required
     - **conversation_id**: Rasa ID of the conversation
     - **user_search**: search terms entered by the user
-    - **portail**: data portal where the search is done
+    - **portal**: data portal where the search is done
     - **date**: date of the search [yy-mm-dd hh:mm:ss]
     """
 
     sql_query.add_new_search_query(
-        search.conversation_id, search.user_search, search.portail, search.date
+        search.conversation_id, search.user_search, search.portal, search.date
     )
 
 
