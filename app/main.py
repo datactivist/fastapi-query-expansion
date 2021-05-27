@@ -3,7 +3,6 @@ from __future__ import annotations
 import expansion
 import sql_query
 
-import os
 import json
 import numpy as np
 from pathlib import Path
@@ -13,7 +12,7 @@ from enum import Enum
 import expansion
 import request_lexical_resources
 
-from fastapi import FastAPI, Query, HTTPException
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from typing import List, Tuple, Optional
 
@@ -24,7 +23,7 @@ class Add_Search_Query(BaseModel):
 
     conversation_id: str
     user_search: str
-    portail: str
+    portal: str
     date: str
 
     class Config:
@@ -84,6 +83,50 @@ class Add_Keywords_Feedback_Query(BaseModel):
                     },
                 ],
             }
+        }
+
+
+class databaseFeedbacksExtraction(BaseModel):
+
+    user_search: str
+    portal: str
+    date: str
+    feedbacks: List[Keywords_Feedback]
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "user_search": "barrage",
+                "portal": "datasud",
+                "date": "2021-04-16 12:15:11",
+                "feedbacks": [
+                    {
+                        "original_keyword": "barrage",
+                        "proposed_keyword": "digue",
+                        "feedback": -1,
+                    },
+                    {
+                        "original_keyword": "barrage",
+                        "proposed_keyword": "digues",
+                        "feedback": -1,
+                    },
+                    {
+                        "original_keyword": "barrage",
+                        "proposed_keyword": "inondation",
+                        "feedback": -1,
+                    },
+                    {
+                        "original_keyword": "barrage",
+                        "proposed_keyword": "crue",
+                        "feedback": -1,
+                    },
+                    {
+                        "original_keyword": "barrage",
+                        "proposed_keyword": "Hydraulique",
+                        "feedback": 1,
+                    },
+                ],
+            },
         }
 
 
@@ -243,6 +286,16 @@ async def get_referentiels():
     return request_lexical_resources.get_available_referentiels()
 
 
+@app.get("/extract_all_feedbacks", response_model=List[databaseFeedbacksExtraction])
+async def extract_keywords_feedback():
+    """
+    ## Function
+    Extract all the database feedbacks and return it as a JSON object
+    """
+
+    return sql_query.extract_database_feedbacks()
+
+
 @app.post("/query_expand", response_model=List[ResponseFromSense])
 async def manage_query_expand(query: Search_Expand_Query):
     """
@@ -291,12 +344,12 @@ async def add_search(search: Add_Search_Query):
     ### Required
     - **conversation_id**: Rasa ID of the conversation
     - **user_search**: search terms entered by the user
-    - **portail**: data portal where the search is done
+    - **portal**: data portal where the search is done
     - **date**: date of the search [yy-mm-dd hh:mm:ss]
     """
 
     sql_query.add_new_search_query(
-        search.conversation_id, search.user_search, search.portail, search.date
+        search.conversation_id, search.user_search, search.portal, search.date
     )
 
 

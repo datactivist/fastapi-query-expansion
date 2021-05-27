@@ -48,6 +48,11 @@ update_config()
         sed -i "s/lexical_resources_API_host_name = .*/lexical_resources_API_host_name = '$lexical_resources_API_host_name'/" app/request_lexical_resources.py
         sed -i "s/lexical_resources_API_port = .*/lexical_resources_API_port = '$lexical_resources_API_port'/" app/request_lexical_resources.py
         echo ""
+    else
+        echo "Updating lexical_resources access in expansion.py"
+        sed -i "s/lexical_resources_API_host_name = .*/lexical_resources_API_host_name = '$lexical_resources_docker_name'/" app/request_lexical_resources.py
+        sed -i "s/lexical_resources_API_port = .*/lexical_resources_API_port = '80'/" app/request_lexical_resources.py
+        echo ""
     fi
 
 }
@@ -55,12 +60,12 @@ update_config()
 start_docker()
 {
     if $flag_start_docker; then
-        sudo docker stop $docker_name
-        sudo docker rm $docker_name
+        sudo docker stop $expansion_docker_name
+        sudo docker rm $expansion_docker_name
         if $flag_silence_docker; then
-            sudo docker run -d --name $docker_name -h $expansion_API_host_name -p $expansion_API_port:80 $docker_name:$docker_version
+            sudo docker run -d --name $expansion_docker_name -h $expansion_API_host_name -p $expansion_API_port:80 $expansion_docker_name:$expansion_docker_version
         else
-            sudo docker run --name $docker_name -h $expansion_API_host_name -p $expansion_API_port:80 $docker_name:$docker_version
+            sudo docker run --name $expansion_docker_name -h $expansion_API_host_name -p $expansion_API_port:80 $expansion_docker_name:$expansion_docker_version
         fi
     else
         echo "Not starting docker"
@@ -84,7 +89,7 @@ update_config
 if [ $deployment_method == "local" ]; then
     start_local_mode
 elif [ $deployment_method == "docker" ]; then
-    sudo docker build -t $docker_name:$docker_version .
+    sudo docker build . -t $expansion_docker_name:$expansion_docker_version
     start_docker
 else
     echo "'$deployment_method' is not a valid value for deployment_method in config.config"

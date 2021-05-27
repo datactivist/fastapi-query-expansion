@@ -12,6 +12,6 @@ CREATE TABLE search (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
     "conversation_id" VARCHAR(255) NOT NULL, 
 	"user_search" VARCHAR(255) NOT NULL,
-    "portail" VARCHAR (255) NOT NULL,
+    "portal" VARCHAR (255) NOT NULL,
     "date" DATETIME NOT NULL
 );
