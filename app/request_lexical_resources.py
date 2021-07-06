@@ -1,7 +1,7 @@
 import requests
 
-lexical_resources_API_host_name = '127.0.0.1'
-lexical_resources_API_port = '8003'
+lexical_resources_API_host_name = "127.0.0.1"
+lexical_resources_API_port = "8003"
 lexical_resources_API_url = (
     "http://" + lexical_resources_API_host_name + ":" + lexical_resources_API_port + "/"
 )
@@ -35,8 +35,8 @@ def get_similarity(
     body = {
         "keyword1": keyword1,
         "keyword2": keyword2,
-        "embeddings_type": "word2vec",
-        "embeddings_name": "frWac_non_lem_no_postag_no_phrase_200_cbow_cut0.magnitude",
+        "embeddings_type": embeddings_type,
+        "embeddings_name": embeddings_name,
     }
 
     return requests.post(get_similarity_url, json=body).json()
@@ -54,8 +54,8 @@ def get_most_similar(
 
     body = {
         "keyword": keyword,
-        "embeddings_type": "word2vec",
-        "embeddings_name": "frWac_non_lem_no_postag_no_phrase_200_cbow_cut0.magnitude",
+        "embeddings_type": embeddings_type,
+        "embeddings_name": embeddings_name,
         "topn": topn,
         "slider": slider,
     }
@@ -79,8 +79,8 @@ def get_most_similar_referentiels(
     body = {
         "keyword": keyword,
         "referentiel": referentiel,
-        "embeddings_type": "word2vec",
-        "embeddings_name": "frWac_non_lem_no_postag_no_phrase_200_cbow_cut0.magnitude",
+        "embeddings_type": embeddings_type,
+        "embeddings_name": embeddings_name,
         "topn": topn,
         "slider": slider,
     }
