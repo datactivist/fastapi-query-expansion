@@ -42,13 +42,12 @@ def get_senses_from_keyword(embeddings_type, keyword):
     return print("TODO") if embeddings_type == EmbeddingsType.wordnet else [keyword]
 
 
-def compute_feedback_score(conversation_id, user_search, result):
+def compute_feedback_score(original_keyword, proposed_keyword):
 
     """
     Compute the feedback score
-    Input:  conversation_id: id of the conversation
-            user_search: keyword entered by the user
-            result: proposed result to the user
+    Input:  original_keyword: keyword at the origin of the proposition
+            proposed_keyword: keyword proposed to the user
     Output: Feedback score, default value to 0.4 if no feedbacks available
     """
 
@@ -66,7 +65,7 @@ def compute_feedback_score(conversation_id, user_search, result):
     """
 
     # get feedback for that particular keyword1 -> keyword2 sequence (TODO: check for similar search?)
-    feedbacks = sql_query.get_feedback_for_reranking(user_search, result)
+    feedbacks = sql_query.get_feedback_for_expansion(original_keyword, proposed_keyword)
     chosen = 0
     ignored = 0
     base_score = 0.4
