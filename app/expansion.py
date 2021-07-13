@@ -2,7 +2,7 @@ import json
 import numpy as np
 from enum import Enum
 from pathlib import Path
-import requests
+import re
 
 import sql_query
 import request_lexical_resources
@@ -10,6 +10,8 @@ import request_lexical_resources
 data_path = Path("data")
 keyw_path = Path("keywords_vectors")
 embeddings_path = Path("embeddings")
+
+keywords_delimitor = " |,|;|_|\|"
 
 
 class EmbeddingsType(str, Enum):
@@ -146,7 +148,7 @@ def split_user_entry(user_entry):
     Currently splitting them with space char
     """
 
-    return user_entry.split(" ")
+    return re.split(keywords_delimitor, user_entry)
 
 
 def sort_array_of_tuple_with_second_value(array):
