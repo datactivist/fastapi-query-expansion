@@ -78,8 +78,8 @@ def compute_feedback_score(original_keyword, proposed_keyword):
             if feedback == -1:
                 ignored += 1
 
-        # remove a point for every 5 users that didn't choose it
-        chosen -= ignored % 5
+        # remove a point for every 10 users that didn't choose it
+        chosen -= int(ignored / 10)
 
         feedback_score = base_score + (chosen / len(feedbacks))
 
@@ -102,9 +102,6 @@ def combine_similarity_and_feedback_score(feedback_score, similarity_score, alph
 
     Output: score combination of similarity and feedback
     """
-
-    if feedback_score == -1:
-        feedback_score = 1 - alpha
 
     return (1 - alpha) * similarity_score + alpha * feedback_score
 
@@ -131,7 +128,7 @@ def use_feedback(original_keyword, keyword_sim_list, alpha=0.5):
             feedback_score, keyword_sim[1], alpha
         )
 
-        print(keyword_sim[0], ":", keyword_sim[1], "->", new_sim)
+        # print(keyword_sim[0], ":", keyword_sim[1], "->", new_sim)
 
         new_list.append((keyword_sim[0], new_sim))
 
@@ -195,6 +192,17 @@ def get_cluster(
         similar_words = request_lexical_resources.get_most_similar(
             keyword, embeddings_type, embeddings_name, max_width, slider
         )
+
+        # Process for using feedback
+        temp_sim = []
+        for word_sim in similar_words["similar"]:
+            temp_sim.append((word_sim["word"], word_sim["similarity"]))
+        temp_sim = use_feedback(keyword, temp_sim, 0.6)
+        temp_sim = sort_array_of_tuple_with_second_value(temp_sim)
+        similar_words["similar"] = []
+        for temp in temp_sim:
+            similar_words["similar"].append({"word": temp[0], "similarity": temp[1]})
+        # Process for using feedback
 
         for word in similar_words[SimilarityType.synonym]:
             sub_cluster = {}
@@ -276,7 +284,7 @@ def build_tree(
             keyword_sim_list = []
             for result in results:
                 keyword_sim_list.append((result["word"], result["similarity"]))
-            keyword_sim_list = use_feedback(sense, keyword_sim_list)
+            keyword_sim_list = use_feedback(sense, keyword_sim_list, 0.6)
             keyword_sim_list = sort_array_of_tuple_with_second_value(keyword_sim_list)
 
             referentiel_output = {"tags": [x[0] for x in keyword_sim_list]}

@@ -1,7 +1,7 @@
 import requests
 
-lexical_resources_API_host_name = "127.0.0.1"
-lexical_resources_API_port = "8003"
+lexical_resources_API_host_name = '127.0.0.1'
+lexical_resources_API_port = '8003'
 lexical_resources_API_url = (
     "http://" + lexical_resources_API_host_name + ":" + lexical_resources_API_port + "/"
 )
