@@ -157,6 +157,17 @@ def sort_array_of_tuple_with_second_value(array):
     return array
 
 
+def get_geoloc_parents(ref_name, tag_name):
+
+    parent_list = request_lexical_resources.get_most_similar_referentiels(
+        tag_name, ref_name, "geoloc"
+    )
+
+    parents = [parent["word"] for parent in parent_list]
+
+    return {"name": ref_name, "type": "geoloc", "tags": parents}
+
+
 def get_cluster(
     keyword, embeddings_type, embeddings_name, max_width, max_depth, current_depth
 ):
@@ -245,7 +256,7 @@ def get_cluster(
 
 
 def build_tree(
-    keyword, embeddings_type, embeddings_name, max_depth, max_width, referentiel
+    keyword, embeddings_type, embeddings_name, max_depth, max_width, referentiels
 ):
 
     """
@@ -270,27 +281,34 @@ def build_tree(
 
     for sense in senses:
 
-        if referentiel is not None:
+        referentiel_output = []
+        if referentiels is not None:
+            for referentiel in referentiels:
+                if referentiel.type == "tags":
 
-            results = request_lexical_resources.get_most_similar_referentiels(
-                sense,
-                referentiel.name,
-                embeddings_type,
-                embeddings_name,
-                referentiel.width,
-                0,
-            )
+                    results = request_lexical_resources.get_most_similar_referentiels(
+                        sense,
+                        referentiel.name,
+                        referentiel.type,
+                        embeddings_type,
+                        embeddings_name,
+                        referentiel.width,
+                        0,
+                    )
 
-            keyword_sim_list = []
-            for result in results:
-                keyword_sim_list.append((result["word"], result["similarity"]))
-            keyword_sim_list = use_feedback(sense, keyword_sim_list, 0.6)
-            keyword_sim_list = sort_array_of_tuple_with_second_value(keyword_sim_list)
+                    keyword_sim_list = []
+                    for result in results:
+                        keyword_sim_list.append((result["word"], result["similarity"]))
+                    keyword_sim_list = use_feedback(sense, keyword_sim_list, 0.6)
+                    keyword_sim_list = sort_array_of_tuple_with_second_value(
+                        keyword_sim_list
+                    )
 
-            referentiel_output = {"tags": [x[0] for x in keyword_sim_list]}
-
-        else:
-            referentiel_output = []
+                    referentiel_output = {
+                        "name": referentiel.name,
+                        "type": referentiel.type,
+                        "tags": [x[0] for x in keyword_sim_list],
+                    }
 
         search_result["referentiel"] = referentiel_output
 
@@ -306,7 +324,7 @@ def build_tree(
 
 
 def expand_keywords(
-    keywords, embeddings_type, embeddings_name, max_depth, max_width, referentiel
+    keywords, embeddings_type, embeddings_name, max_depth, max_width, referentiels
 ):
     """
     Return the most similar keywords from the initial keywords
@@ -334,7 +352,17 @@ def expand_keywords(
                     embeddings_name,
                     max_depth,
                     max_width,
-                    referentiel,
+                    referentiels,
                 )
+            )
+    for referentiel in referentiels:
+        if referentiel.type == "geoloc":
+            data.append(
+                {
+                    "original_keyword": referentiel.tag,
+                    "referentiel": get_geoloc_parents(
+                        referentiel.name, referentiel.tag
+                    ),
+                }
             )
     return data

@@ -66,6 +66,7 @@ def get_most_similar(
 def get_most_similar_referentiels(
     keyword,
     referentiel,
+    ref_type,
     embeddings_type="word2vec",
     embeddings_name="frWac_non_lem_no_postag_no_phrase_200_cbow_cut0.magnitude",
     topn=10,
@@ -79,6 +80,7 @@ def get_most_similar_referentiels(
     body = {
         "keyword": keyword,
         "referentiel": referentiel,
+        "ref_type": ref_type,
         "embeddings_type": embeddings_type,
         "embeddings_name": embeddings_name,
         "topn": topn,

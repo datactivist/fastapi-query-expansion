@@ -133,12 +133,15 @@ class databaseFeedbacksExtraction(BaseModel):
 class Referentiel(BaseModel):
 
     name: str
-    tags: Optional[bool] = True
+    type: str
     width: Optional[int] = Field(10, ge=0, le=50)
+    tag: Optional[str]
 
 
 class Referentiel_Output(BaseModel):
 
+    name: str
+    type: str
     tags: Optional[List[str]]
 
 
@@ -156,7 +159,7 @@ class Search_Expand_Query(BaseModel):
     ] = "frWac_non_lem_no_postag_no_phrase_200_cbow_cut0.magnitude"
     max_depth: Optional[int] = Field(1, ge=0, le=3)
     max_width: Optional[int] = Field(5, ge=0, le=50)
-    referentiel: Optional[Referentiel]
+    referentiel: Optional[List[Referentiel]]
 
     class Config:
         schema_extra = {
@@ -166,7 +169,7 @@ class Search_Expand_Query(BaseModel):
                 "embeddings_name": "frWac_non_lem_no_postag_no_phrase_200_cbow_cut0.magnitude",
                 "max_depth": 1,
                 "max_width": 5,
-                "referentiel": {"name": "datasud"},
+                "referentiel": [{"name": "datasud"}],
             }
         }
 
@@ -191,7 +194,7 @@ class ResponseFromSense(BaseModel):
 
     original_keyword: str
     tree: Optional[List[Cluster]]
-    referentiel: Referentiel_Output
+    referentiel: Optional[Referentiel_Output]
 
     class Config:
         schema_extra = {
