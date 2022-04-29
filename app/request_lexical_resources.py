@@ -44,6 +44,7 @@ def get_similarity(
 
 def get_most_similar(
     keyword,
+    referentiel,
     embeddings_type="word2vec",
     embeddings_name="frWac_non_lem_no_postag_no_phrase_200_cbow_cut0.magnitude",
     topn=10,
@@ -54,6 +55,7 @@ def get_most_similar(
 
     body = {
         "keyword": keyword,
+        "referentiel": referentiel,
         "embeddings_type": embeddings_type,
         "embeddings_name": embeddings_name,
         "topn": topn,

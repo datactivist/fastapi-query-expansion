@@ -169,7 +169,13 @@ def get_geoloc_parents(ref_name, tag_name):
 
 
 def get_cluster(
-    keyword, embeddings_type, embeddings_name, max_width, max_depth, current_depth
+    keyword,
+    referentiel,
+    embeddings_type,
+    embeddings_name,
+    max_width,
+    max_depth,
+    current_depth,
 ):
 
     """
@@ -201,7 +207,12 @@ def get_cluster(
         slider = 1 if current_depth > 0 else 0
 
         similar_words = request_lexical_resources.get_most_similar(
-            keyword, embeddings_type, embeddings_name, max_width, slider
+            keyword,
+            referentiel.name,
+            embeddings_type,
+            embeddings_name,
+            max_width,
+            slider,
         )
 
         # Process for using feedback
@@ -223,6 +234,7 @@ def get_cluster(
         for word in similar_words[SimilarityType.similar]:
             sub_cluster = get_cluster(
                 word,
+                referentiel,
                 embeddings_type,
                 embeddings_name,
                 max_width,
@@ -241,6 +253,7 @@ def get_cluster(
                 for sense in similar_words[sim_type]:
                     sub_cluster = get_cluster(
                         sense,
+                        referentiel,
                         embeddings_type,
                         embeddings_name,
                         max_width,
@@ -314,7 +327,13 @@ def build_tree(
 
         tree.append(
             get_cluster(
-                sense, embeddings_type, embeddings_name, max_width, max_depth, 0
+                sense,
+                referentiel,
+                embeddings_type,
+                embeddings_name,
+                max_width,
+                max_depth,
+                0,
             )
         )
 
