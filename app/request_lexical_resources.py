@@ -49,6 +49,7 @@ def get_most_similar(
     embeddings_name="frWac_non_lem_no_postag_no_phrase_200_cbow_cut0.magnitude",
     topn=10,
     slider=0,
+    only_vocabulary=False,
 ):
 
     get_most_similar_url = lexical_resources_API_url + "most_similar"
@@ -60,6 +61,7 @@ def get_most_similar(
         "embeddings_name": embeddings_name,
         "topn": topn,
         "slider": slider,
+        "only_vocabulary": only_vocabulary,
     }
 
     return requests.post(get_most_similar_url, json=body).json()

@@ -159,6 +159,7 @@ class Search_Expand_Query(BaseModel):
     ] = "frWac_non_lem_no_postag_no_phrase_200_cbow_cut0.magnitude"
     max_depth: Optional[int] = Field(1, ge=0, le=3)
     max_width: Optional[int] = Field(5, ge=0, le=50)
+    only_vocabulary: Optional[bool] = False
     referentiel: Optional[List[Referentiel]]
 
     class Config:
@@ -332,6 +333,7 @@ async def manage_query_expand(query: Search_Expand_Query):
         query.embeddings_name,
         query.max_depth,
         query.max_width,
+        query.only_vocabulary,
         query.referentiel,
     )
 

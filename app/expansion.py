@@ -175,6 +175,7 @@ def get_cluster(
     embeddings_name,
     max_width,
     max_depth,
+    only_vocabulary,
     current_depth,
 ):
 
@@ -213,6 +214,7 @@ def get_cluster(
             embeddings_name,
             max_width,
             slider,
+            only_vocabulary,
         )
 
         # Process for using feedback
@@ -239,6 +241,7 @@ def get_cluster(
                 embeddings_name,
                 max_width,
                 max_depth,
+                only_vocabulary,
                 current_depth + 1,
             )
             cluster["similar_senses"].append([sub_cluster, SimilarityType.similar])
@@ -258,6 +261,7 @@ def get_cluster(
                         embeddings_name,
                         max_width,
                         max_depth,
+                        only_vocabulary,
                         current_depth + 1,
                     )
                     cluster["similar_senses"].append([sub_cluster, sim_type])
@@ -269,7 +273,13 @@ def get_cluster(
 
 
 def build_tree(
-    keyword, embeddings_type, embeddings_name, max_depth, max_width, referentiels
+    keyword,
+    embeddings_type,
+    embeddings_name,
+    max_depth,
+    max_width,
+    only_vocabulary,
+    referentiels,
 ):
 
     """
@@ -280,6 +290,7 @@ def build_tree(
             embeddings_name: name of the embeddings
             max_depth: maximum depth of keywords search
             max_width: maximum width of keywords search
+            only_vocabulary: wether or not it should only return keywords part of the sources vocabulary
             referentiel: referentiel to use for expansion
     
     Output: Data tree for keyword
@@ -333,6 +344,7 @@ def build_tree(
                 embeddings_name,
                 max_width,
                 max_depth,
+                only_vocabulary,
                 0,
             )
         )
@@ -343,7 +355,13 @@ def build_tree(
 
 
 def expand_keywords(
-    keywords, embeddings_type, embeddings_name, max_depth, max_width, referentiels
+    keywords,
+    embeddings_type,
+    embeddings_name,
+    max_depth,
+    max_width,
+    only_vocabulary,
+    referentiels,
 ):
     """
     Return the most similar keywords from the initial keywords
@@ -353,6 +371,7 @@ def expand_keywords(
             embeddings_name: name of the embeddings
             max_depth: maximum depth of keywords search
             max_width: maximum width of keywords search
+            only_vocabulary: wether or not it should only return keywords part of the sources vocabulary
             referentiel: object of type main.referentiel
             
     Output: Data structure with most similar keywords found
@@ -371,6 +390,7 @@ def expand_keywords(
                     embeddings_name,
                     max_depth,
                     max_width,
+                    only_vocabulary,
                     referentiels,
                 )
             )
